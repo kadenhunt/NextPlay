@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # NextPlay Frontend Handoff (From Kaden)
 
 Hey team - this is my frontend handoff snapshot for tomorrow's demo and our backend integration phase.
@@ -76,3 +77,7 @@ From repo root:
 - Implement draft control endpoints (start/pause/skip/team auto)
 - Implement roster transaction endpoints with server validation
 
+=======
+# NextPlay
+repository for NextPlay a college fantasy sports framework.
+>>>>>>> 9b79f19c7c3135b7a0e149387ae9b2fa4df7a642
