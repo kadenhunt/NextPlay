@@ -1,0 +1,1466 @@
+﻿x[a]
+Software Design Document
+for
+NextPlay, A Fantasy College Sports Framework
+Version 1.0 approved
+Prepared by Ahmad Fardeen Adel, Ahmad Jawid Karimi, Hudson Hatcher, Kaden Hunt
+CS 496 - Western Kentucky University
+1 - 29 - 26
+
+
+
+
+
+
+
+
+1. Purpose and Scope[b]
+1.1 Purpose
+NextPlay is a web-based fantasy college sports platform that lets users create accounts, join or create leagues, draft players, set lineups, and compete in weekly matchups using real collegiate performance data. This Software Design Document explains how the SRS requirements are realized through the system’s UI flows, frontend/backend architecture, data model, and API interface contracts. It defines the major screens and navigation, the key runtime behaviors, and the modules responsible for implementing those behaviors. It also documents security, testing strategy, and deployment considerations needed to build and validate an MVP within the semester timeline.
+1.2 Scope
+In scope
+* User authentication (register/login/logout) and session persistence
+* League creation, join via invite code/link, and league membership management
+* League lifecycle states (Created → Draft Scheduled → Draft In Progress → Season Active → Playoffs → Complete) with UI gating
+* Snake draft with timer + auto-draft on timeout; draft recap/results
+* Team roster + lineup management with lineup lock enforcement
+* Player browsing/search/filtering and availability display
+* Weekly matchups and standings display (read-only MVP scoring updates allowed via refresh/polling)
+* League chat (basic messages, no moderation tooling required for MVP)
+Out of scope
+* True real-time scoring + draft synchronization via WebSockets (polling acceptable for MVP)
+* Advanced trade system (multi-step offers, veto windows, counters) beyond a basic proposal flow
+* Predictive insights / analytics features
+* Cross-league global social features, notifications, and push alerts
+* Admin console (suspend users, audit tooling) beyond basic logging
+1.3 Definitions and Acronyms
+Term
+	Definition
+	League State
+	The lifecycle phase of a league that controls which features are available (Created, Draft Scheduled, Draft In Progress, Season Active, Playoffs, Complete).
+	Commissioner
+	The league owner/administrator responsible for configuring league rules, managing members, and controlling draft-related actions (start/pause, settings changes) as permitted by league state.
+	Snake Draft
+	 A draft format where the pick order reverses each round (e.g., 1→N then N→1).
+	Auto Draft
+	 A system-driven pick made when a user fails to pick before the timer expires, using rankings/availability rules.
+	Lineup Lock
+	The cutoff time after which lineup changes are restricted for a matchup/week (typically when games begin).
+	________________
+
+
+2. Constraints, Assumptions, and Design Goals
+2.1 Constraints
+* Platform constraints:
+   * Web-only application
+   * Supported browsers: latest 2 versions of Chrome, Edge, Firefox, and Safari.
+* Course constraints:
+   * 3 Hours a week in class; scope must fit a semester build.
+   * Team size limits parallel work; we prioritize an MVP path: one sport end-to-end before expanding features.
+   * Limited budget: project must run on free/low-cost tiers where possible (hosting, database, etc.).
+* Data constraints: 
+   * Player and stats data depend on third-party NCAA data sources (availability, rate limits, schema changes).
+   * Data may not update in real time; scoring can be periodic refresh for MVP.
+   * Data completeness varies by sport/season (missing injury/status fields, inconsistent IDs across sources).
+* Security constraints:
+   * Authentication must use secure practices (hashed passwords, HTTPS, server-side authorization checks).
+   * Store minimal PII (email + display name). No sensitive student data required.
+When constraints conflict with features, priority is: correctness → security → usability → performance → extra features.
+2.2 Assumptions
+* Users have reliable internet access while drafting and setting lineups.
+* External sports data sources will remain available for the semester and provide stable identifiers for players/teams most of the time.
+* The MVP can treat stats updates as “near real-time” via polling/refresh rather than true live streaming.
+* League members act in good faith (we don’t need anti-cheat or moderation systems for MVP).
+* Time is stored in a consistent timezone strategy (UTC in backend; local display in UI).
+* Invite links/codes can be assumed shareable and not “high security” beyond random token + expiry
+2.3 Design Goals
+* Maintainability: 
+   * Keep a modular structure (auth, league, draft, roster, matchups) with clear API boundaries so features can be expanded without rewriting core logic.
+* Usability: 
+   * Optimize core flows (create/join → draft → set lineup → view matchup) with predictable navigation, clear empty states, and minimal clicks for common actions.
+* Correctness:
+   * Enforce server-authoritative rules for draft turns, roster limits, and lineup locks; database constraints prevent duplicate ownership and inconsistent states.
+* Security: 
+   * Use secure authentication, role-based authorization (commissioner vs member), and protect endpoints from unauthorized access; minimize stored personal data.
+* Performance: 
+   * Pages should feel fast under normal load; use pagination/filtering for player lists and caching for external data to avoid rate-limit issues.
+
+
+
+
+
+
+________________
+
+
+3. System Context and Overview[c]
+The system context view defines the operational boundaries of the NextPlay Fantasy College Sports Framework and illustrates how the system interacts with external actors and supporting systems. This section will provide an advanced representation of how the NextPlay Fantasy College Sport framework operates within its environment, clarifying integration points with external systems and identifying its primary stakeholders. Additionally, the context view does not describe core implementation details; instead, it demonstrates how the system communicates with users and support services. 
+
+
+3.1 System Summary
+The app is a web-based fantasy college sports platform that enables users to manage, create, and participate in fantasy leagues based on college athletic competitions such as basketball and football. The app allows users to create an account, join or create a league, manage team rosters, compete in weekly matchups, and participate in drafts. Moreover, the app retrieves official player statistics from external sports data providers and applies a scoring engine to calculate fantasy points and league rankings. The initial users of the system include fantasy league participants, league commissioners, system administrators, and guests. 
+3.2 Stakeholders and User Roles
+   * User capabilities include:
+   * Register and authenticate an account.
+   * Join or accept invitations to leagues.
+   * Participate in live or scheduled drafts.
+   * Select and manage team rosters.
+   * Set weekly starting lineups.
+   * Propose, accept, or reject trades.
+   * View player statistics and scoring updates.
+   * Communicate within league chat (if enabled).
+   * Track standings, matchups, and performance history.
+
+
+   * Commissioner capabilities include:
+   * Create and configure leagues.
+   * Define league rules (scoring format, roster size, draft type).
+   * Schedule draft sessions.
+   * Approve or veto trades (if league rules allow).
+   * Remove inactive users from leagues.
+   * Manage league visibility (public/private).
+   * Reset or modify league settings before the season starts.
+
+      * Guest: Capabilities include:
+      * Browse public league information (limited access)
+      * View general player statistics
+      * Register for a full account
+      * Explore platform features before joining
+
+
+
+         * Administrator: 
+The administrator role is responsible for overall system oversight and operational management.
+Capabilities include:
+         * Manage user accounts (suspend, activate, reset credentials)
+
+         * Monitor system logs and audit activity
+
+         * Manage integration settings with external sports data providers
+
+         * Maintain database integrity and perform backups
+
+         * Configure global system settings
+
+         * Enforce security and compliance policies
+
+Administrators operate within the highest privilege level but remain subject to authentication and auditing controls.
+
+
+
+
+3.3 System Context
+Figure CTX-01: System Context Diagram
+  
+The System Context Diagram (CTX-01) illustrates the boundary of the NextPlay Fantasy College Sports Framework and its interactions with external users and systems. The diagram identifies the platform as a centralized application positioned between end users and supporting external services. All internal components—including the web interface, backend services, and database—operate within the system boundary, while users and third-party providers exist outside the boundary.
+Context notes
+            * External Systems
+            * Sports Data Source:
+The platform integrates with external sports data providers such as ESPN or Sportradar to retrieve official collegiate player statistics, game results, and performance metrics. These external services supply authoritative data used by the scoring engine to compute fantasy points and update weekly matchups. The system does not generate official sports statistics; it consumes and processes validated external data feeds.
+            * Authentication Provider (Optional):
+            * If third-party authentication is supported, identity services such as Google OAuth may be utilized to securely verify user credentials. If external authentication is not implemented, secure credential validation and token management are handled internally within the system boundary.
+
+
+
+Trust boundary:
+Trust boundaries represent security enforcement zones where authentication, authorization, and validation controls are applied.
+               1. User-to-Application Boundary:All user interactions occur through secure HTTPS connections. Authentication is enforced at this boundary through credential verification and token validation (e.g., JWT). Unauthorized or unauthenticated requests are rejected before accessing protected resources.
+
+               2. Application-to-Database Boundary: The backend enforces role-based access control before executing database operations. Authorization logic ensures users can only access or modify data associated with their account or league. Direct database access from external actors is strictly prohibited.
+
+               3. Application-to-External API Boundary :Communication with external sports data providers occurs using secure API keys and encrypted channels. Responses are validated and sanitized before being processed by internal scoring services to prevent data integrity risks.
+
+These trust boundaries ensure confidentiality, integrity, and controlled access across all system interactions while maintaining a clear separation between trusted internal components and external entities.
+________________
+
+
+4. Architecture Overview
+
+
+4.1 Architecture Summary
+NextPlay follows a client–server architecture with a modular backend design. The frontend handles user interaction and communicates securely with the backend API. The backend processes business logic, authentication, league management, drafting, and scoring operations. A relational database stores all persistent data, including users, leagues, teams, and statistics. The system integrates with external sports data providers to retrieve official collegiate player statistics. This architecture supports scalability, security, and maintainability while keeping deployment simple
+4.2 High-Level Containers
+Figure ARC-01: Container Diagram
+  
+Containers
+                  * Frontend:
+Handles user interface, user interactions, and secure communication with the backend.
+                  * Backend API:
+Implements business logic, enforces authentication and authorization, manages leagues and scoring, and communicates with the database and external APIs.
+                  * Database:
+Stores persistent data such as users, leagues, rosters, draft history, and scoring results.
+                  * External Data Provider:
+Supplies official collegiate sports statistics used for fantasy scoring calculations.
+4.3 Key Architectural Decisions
+Decision
+	Choice
+	Rationale
+	API style
+	REST (JSON over HTTP)
+	Simple to implement, easy to test with Postman, maps cleanly to screens/modules, and works well for a web MVP.
+	Data store
+	PostgreSQL (relational)
+	 Supports the ERD/entities (users/leagues/teams/picks/matchups) and supports joins/constraints for correctness.
+	Real-time updates
+	Polling for MVP; WebSocket/SSE later
+	Polling is simpler + reliable under time constraints; draft/chat can be upgraded to real-time without changing UI structure.
+	Auth
+	JWT (stored in HttpOnly cookie) + server-side authorization
+	JWT works with stateless APIs; HttpOnly cookie reduces token exposure; backend remains the authority for permissions.
+	________________
+
+
+5. UI and Interaction Design[d][e]
+
+
+5.1 UI Map and Navigation  
+Figure UI-01: UI Map (Sitemap or Navigation Map)
+Primary navigation flow from authentication to dashboard, then into league scoped functionality via the League Shell.
+Global navigation
+                     * [Landing, Login, Register, Dashboard]
+
+
+
+League navigation
+                        * [Overview, Draft, My Team, Players, Matchups, Standings, Chat, Settings]
+
+
+
+5.2 Screen Inventory
+Screen ID
+	Screen Name
+	Visible States
+	Primary Actions
+	UI-01
+	Landing
+	Default
+Redirecting
+	Navigate to Login
+Navigate to Register
+	UI-02
+	Login
+	Default
+Submitting
+Error
+	Submit Login
+Navigate to Register
+Forgot Password
+	UI-03
+	Register
+	Default
+Submitting
+Error
+Success
+	Submit to registration
+Navigate to Login
+	UI-05
+	Dashboard
+	Loading
+Empty
+Populated
+Error
+	Create League
+Join League
+Open League
+Logout
+	UI-06
+	Create League
+	Default form
+Validation errors
+Submitting
+Success
+Error
+	Set league name, sport, team count
+Set draft options
+Create League
+Cancel/back to Dashboard
+	UI-07
+	Join League
+	Default
+Validating
+Invalid/Expired invite
+Already a member
+Success
+Error
+	Enter invite code/ accept invite link
+Join league
+Back to Dashboard
+	UI-09
+	League Home
+	Loading league summary
+League states (Created, Draft Scheduled, Draft in progress, Season Active, Complete)
+Error
+	Navigate to Draft/ My Team/ Players/ Matchups/ Standings/Chat/Settings
+View invite link/code
+Start/edit draft
+	UI-10
+	League Settings
+	Loading settings
+Editable
+Read-only
+Error
+	Edit league name or settings
+Manage members
+Generate/reset invite code
+Save changes
+	UI-12
+	Draft Lobby
+	Loading draft settings/order
+Pre-draft countdown
+Waiting for commissioner to start
+Draft locked
+Error
+	Ready up
+View draft order and rules
+Start draft
+Enter Draft Room
+	UI-13
+	Draft Room
+	Loading
+Live drafting
+Pick submitted
+Auto-pick occurred
+Draft paused/disconnected
+Draft complete
+	Search and filter available players
+Draft player
+View team rosters/pick history
+Chat/notifications
+Leave room
+	UI-14
+	Draft Results
+	Loading results
+Completed recap
+Error
+	View draft board by round
+Go to My Team
+Go to League Home
+	UI-15
+	My Team
+	Loading roster/lineup
+Editable lineup
+Locked lineup
+Invalid lineup warning
+Error
+	Set starters/bench
+Save lineup
+Drop player
+Navigate to Players
+	UI-18
+	Players
+	Loading players
+Results list
+Empty results
+Player unavailable
+Error
+	Search players
+Filter by position/team/status/stats
+View player detail
+Add player
+Drop/Swap flow
+Navigate back to My Team
+	UI-22
+	Matchups
+	Loading matchups
+Week selector
+Empty
+Error
+	Change week
+Open matchup detail
+Navigate to Standings
+	UI-23
+	Matchup Detail
+	Loading matchup
+Live/in-progress
+Final
+Not started
+Error
+	View team vs opponent scoring
+View starters/bench
+Navigate to My Team and adjust lineup
+Navigate back to Matchups
+	UI-28
+	Chat
+	Loading messages
+Empty
+Sending
+Error
+	Send message
+View new messages
+Navigate back to League Home
+	All screens support standard UI states: Loading, Empty, Error, and Success to ensure predictable behavior under network failures and missing data.
+5.3 League State Gating Matrix
+Feature or Screen
+	Created
+	Draft Scheduled
+	Draft In Progress
+	Season Active
+	Playoffs
+	Complete
+	Settings
+	Enabled*
+	Enabled*
+	Read-only
+	Read-only
+	Read-only
+	Read-only
+	Invite Members
+	Enabled*
+	Enabled*
+	Locked
+	Locked
+	Locked
+	Locked
+	Draft Lobby
+	Hidden
+	Enabled
+	Hidden
+	Hidden
+	Hidden 
+	Hidden
+	Draft Room
+	Hidden
+	Hidden
+	Enabled
+	Hidden
+	Hidden
+	Hidden
+	My Team
+	Enabled
+	Enabled
+	Read-only
+	Enabled
+	Enabled
+	Read-only
+	Add and Drop
+	Hidden
+	Hidden
+	Hidden
+	Enabled
+	Enabled
+	Locked
+	Matchups
+	Hidden
+	Hidden
+	Hidden
+	Enabled
+	Enabled
+	Read-only
+	Standings
+	Read-only
+	Read-only
+	Read-only
+	Read-only
+	Read-only
+	Read-only
+	Legend: Enabled, Hidden, Locked, Read-only, * = Commissional-only
+Commissioner-only actions are hidden or disabled for non-commissioners.
+5.4 Key Wireflows
+Figure WF-01: Create League to Invite to Join
+  
+
+  
+
+  
+
+Description:
+Shows the commissioner creating a league, generating an invite code/link, and a second user joining through the Join League screen. Includes validation paths for invalid/expired invite codes and redirects users to the League Home upon success.
+Figure WF-02: Draft Lobby to Draft Room to Draft Results
+   
+  
+
+  
+
+Description:
+Shows how users enter the draft lobby, wait for the start time (or commissioner start), transition into the live draft room, and then view a recap in Draft Results once all picks are completed. Includes “auto-pick” behavior when a pick timer expires.
+Figure WF-03: My Team to Matchup Detail to Standings
+       
+Description:
+Shows a typical week flow: user reviews their roster/lineup, opens the matchup detail to compare against opponent scoring, and checks the standings to see league ranking. Includes lineup lock notifications if an athlete's game has started.
+
+
+5.5 UI Component Conventions
+
+ Figure UI-COMP-01: Component Kit Overview
+   
+  
+
+                           * Buttons:
+                           * Primary: Used for the main action on a screen (Create League, Join, Draft Player, Save Lineup). Only one primary per screen when possible.
+                           * Secondary: Used for supporting actions (Cancel, Back,View Details).
+                           * Disabled: Used when requirements are not met (invalid form, locked league state, not user’s draft turn). Disabled buttons include a tooltip or inline hint when applicable.
+                           * Destructive: Used for irreversible actions (Remove Member, Reset Invite Code, Drop Player), requires confirmation.
+
+
+                              * Inputs:
+                              * Default: Labels always visible; helper text shown for complex fields (draft timer, team count).
+                              * Error: Inline validation message directly under the field; submission blocked until fixed.
+                              * Inputs support “loading” state where applicable (e.g., validating invite code).
+
+                                 * Status indicators: 
+                                 * League lifecycle is displayed with a consistent state pill: Created, Draft Scheduled, Draft In Progress, Season Active, Playoffs, Complete.
+                                 * State pills are shown on League Home and Draft-related screens, and used to explain gating.
+                                 * Alerts:
+                                 * Info: Used for guidance (e.g., “Draft starts at 7:00 PM”).
+                                 * Warning: Used for lock/state restrictions (e.g., “Lineup locked for Week 3”).
+                                 * Error: Used for failures (network errors, permission denied).
+                                 * Alerts appear as inline banners on the page; quick confirmations like “Save” may use toast notifications.
+                                 * Lists and tables:
+                                 * Lists and tables follow consistent row structure and spacing.
+                                 * Roster rows show player name, position, real team, status, and actions.
+                                 * Standings rows show team name, W–L, points for/against, and rank.
+                                 * Tables support empty states (“No matchups yet”) and loading placeholders.
+5.6 Screen Specification Template[f]
+Screen: [UI-02 Login]
+Figure UI-02: [Login Screen ]
+   
+Purpose
+                                 * Allows a user to authenticate into the system to access their leagues and dashboard.
+
+
+
+User Actions
+                                    * Enter email and password
+                                    * Submit login form
+                                    * Navigate to registration (if available)
+Data Displayed
+                                    * Login form fields
+                                    * Validation messages
+                                    * Authentication error messages
+State Variants
+                                    * Loading state during authentication
+                                    * Error state on failed login
+                                    * Redirect state on successful login
+Validation Rules
+                                    * Email must be valid format
+                                    * Password cannot be empty
+Error and Empty States
+                                    * Error: invalid credentials message
+                                    * Error: Server unavailable
+                                    * Empty: None
+Associated API Calls
+                                    * POST /auth/login
+                                    * GET /auth/me
+Permissions
+                                    * Only unauthenticated users may access this screen
+Screen: [UI-05 Dashboard]
+Figure UI-05: [User Dashboard]
+  
+
+Purpose
+                                    * Allows users to view and access their leagues, join leagues via invite code, or create a new league.
+User Actions
+                                    * Select league
+                                    * Enter invite code
+                                    * Navigate to league creation
+Data Displayed
+                                    * List of leagues user belongs to
+                                    * League status (Draft / Active / Completed)
+                                    * League summary info
+State Variants
+                                    * Empty state if user belongs to no leagues
+                                    * Loading state while fetching leagues
+Validation Rules
+                                    * Invite code must match expected format
+Error and Empty States
+                                    * Error: Invalid invite code
+                                    * Empty: “You are not in any leagues yet”
+Associated API Calls
+                                    * GET /leagues
+                                    * POST /leagues/join
+Permissions
+                                    * Authenticated users only.
+Screen: [UI-09 League Home]
+Figure UI-09: [League Overview]
+  
+
+Purpose
+                                    * Provides league-level overview and navigation to draft, roster, matchups, standings, and chat.
+User Actions
+                                    * Navigate to draft
+                                    * Navigate to team
+                                    * View standings
+                                    * Access settings (commissioner only)
+Data Displayed
+                                    * League name
+                                    * Current league state
+                                    * Member list
+                                    * Upcoming draft info
+State Variants
+                                    * Pre-draft: Show draft countdown
+                                    * Draft: Show “Draft in Progress” indicator
+                                    * Active: Show current week summary
+Validation Rules
+                                    * Must be valid league member
+Error and Empty States
+                                    * Error: League not found
+                                    * Error: User not authorized
+Associated API Calls
+                                    * GET /leagues/:id
+                                    * GET /leagues/:id/members
+Permissions
+                                    * Members only
+                                    * Commissioner sees settings controls.
+Screen: [UI-13 Draft Room]
+Figure UI-13: [Live Draft Interface]
+  
+
+Purpose
+                                    * Allows league members to draft players in real-time according to the league’s draft order and rules.
+User Actions
+                                    * Draft player when it is their turn
+                                    * Add player to queue
+                                    * Filter/search players
+                                    * Commissioner start/pause draft
+Data Displayed
+                                    * Draft order
+                                    * Current pick number
+                                    * Draft timer
+                                    * Available players list
+                                    * Drafted players list
+State Variants
+                                    * Waiting for turn
+                                    * User’s turn
+                                    * Draft paused
+                                    * Draft completed
+Validation Rules
+                                    * Cannot draft player already selected
+                                    * Cannot draft outside of assigned turn
+                                    * Roster limits enforced
+Error and Empty States
+                                    * Error: Pick submission failed
+                                    * Empty: No players match filter
+Associated API Calls
+                                    * GET /leagues/:id/draft
+                                    * POST /leagues/:id/draft/pick
+                                    * GET /players
+Permissions
+                                    * Members may draft only during their turn
+                                    * Commissioner may start/pause draft
+Screen: [UI-15 My Team]
+Figure UI-15: [Team Roster and Lineup]
+  
+
+Purpose
+                                    * Allows users to manage roster and adjust lineup before lineup lock.
+User Actions
+                                    * Move player between bench and starting lineup
+                                    * Add/drop players
+                                    * Save lineup
+Data Displayed
+                                    * Roster
+                                    * Player stats
+                                    * Lineup positions
+                                    * Lineup lock time
+State Variants
+                                    * Editable before lineup lock
+                                    * Read-only after lineup lock
+Validation Rules
+                                    * Must meet position constraints
+                                    * Cannot exceed roster size
+Error and Empty States
+                                    * Error: Invalid lineup configuration
+                                    * Empty: No players on roster (pre-draft scenario)
+Associated API Calls
+                                    * GET /teams/:id
+                                    * PUT /teams/:id/lineup
+                                    * POST /teams/:id/moves
+Permissions
+                                    * Only team owner may edit lineup
+Screen: [UI-18 Players]
+Figure UI-18: [Player Browser]
+  
+
+Purpose
+                                    * Allows users to browse available players, filter by position, and view player statistics.
+User Actions
+                                    * Filter players
+                                    * Sort by stats
+                                    * View player details
+                                    * Add to queue
+Data Displayed
+                                    * Player name
+                                    * Position
+                                    * Team
+                                    * Stats
+
+
+State Variants
+                                    * During draft (queue enabled)
+                                    * Post-draft (add/drop enabled)
+Validation Rules
+                                    * Cannot add drafted player to queue if already taken
+Error and Empty States
+                                    * Error: Failed to load players
+                                    * Empty: No players match selected filters
+Associated API Calls
+                                    * GET /players
+                                    * GET /players/:id
+Permissions
+                                    * League members only
+Screen: [UI-23 Matchups]
+Figure UI-23: [Weekly Matchup View]
+  
+
+Purpose
+                                    * Displays weekly head-to-head matchups and scoring breakdown.
+User Actions
+                                    * Switch week
+                                    * View matchup details
+Data Displayed
+                                    * Team scores
+                                    * Player contributions
+                                    * Win/loss result
+State Variants
+                                    * Live scoring
+                                    * Finalized scoring
+Validation Rules
+                                    * Week must be within season range
+Error and Empty States
+                                    * Error: Failed to load matchup
+                                    * Empty: Season not started
+Associated API Calls
+                                    * GET /league/:id/matchups
+Permissions
+                                    * League members only
+Screen: [UI-25 Standings]
+Figure UI-25: [Weekly Matchup View]
+  
+
+Purpose
+                                    * Displays league rankings based off wins, losses and tie-breakers
+User Actions
+                                    * Sort standings
+                                    * View team details
+Data Displayed
+                                    * Rank
+                                    * Wins/Losses
+                                    * Points For
+                                    * Points Against
+State Variants
+                                    * Regular season
+                                    * Playoff bracket
+Validation Rules
+                                    * Data read-only
+Error and Empty States
+                                    * Error: Failed to load standings
+                                    * Empty: No games played yet
+Associated API Calls
+                                    * GET /league/:id/standings
+Permissions
+                                    * League members only
+________________
+
+
+6. Backend and Frontend Module Design
+This section aligns with view-based SDD ideas where each view addresses specific concerns.
+6.1 Frontend Modules
+Module
+	Owns Routes/Views
+	Key Components
+	State Owned
+	API/Services Used
+	Rules/Guards
+	Auth
+	/login, /register, /logout
+	LoginForm, PasswordInput, ErrorBanner, LoadingSpinner, ProtectedRoute wrapper
+	authUser, accessToken/session, authStatus, loginError
+	POST /auth/login
+POST /auth/logout
+GET    /auth/me
+	Must be unauthorized to see /login; ProtectedRoute for everything else; token and season refresh, auto-direct to last intended route after login
+	Dashboard
+	/dashboard
+	LeagueCardGrid, JoinLeagueCard, CreateLeagueCTA, RecentActivityList
+	Myleagues[], selectedLeagueId, loading/error
+	GET       /leagues
+POST /leagues/join
+	Requires auth; if no leagues → show empty state + join/create prompts
+	League Shell
+	/league/:leagueId
+	LeagueNavTabs, LeagueContextProvider, Breadcrumbs
+	leagueId, leagueSummary, userRoleInLeague, leagueState
+	GET  /leagues/:id
+GET /leagues/:id/members
+GET /leagues/:id/state
+	Must be a member to access; redirects if invalid leagueId; gates tabs based on league state or role
+	Draft
+	/league/:leagueId/draft, /league/:leagueId/drafts/results
+	DraftBoard, PickTimer, PlayerQueue, SearchPlayers, PickConfirmModal, AutoPickIndicator
+	draftStatus,currentPick, draftOrder[], draftPicks[], queue[], timer, filters/sort
+	GET /leagues/:id/draft, POST /leagues/:id/draft/pick, POST /leagues/:id/draft/queue, GET /players
+	Only allow picking when it’s your turn; commissioner can start/pause draft; lock pick submission when timer expires; prevent drafting already-drafted players
+	Team
+	/league/:leagueId/team/:teamId (or /my-team)
+	RosterTable, LineupEditor, PositionSlot, BenchList, DropConfirmModal
+	team, roster[], lineup[], pendingMoves[], lineupLockTime
+	GET /teams/:id, PUT /teams/:id/lineup, POST /teams/:id/moves (add/drop), GET /league/:id/rules
+	Lineup edits are blocked after lineup lock; only owner can edit their team; validate positions
+	Players
+	/league/:leagueId/players, /players/:playerId
+	PlayerTable, FiltersPanel, SortDropdown, PlaterDetailDrawer/Page, AddToQueueButton
+	filters, sort, searchQuery, pagination, players[], selectedPlayer
+	GET /players?filters…, GET /players/:id, GET /players/:id/stats
+	
+
+	Matchups
+	/league/:leagueId/matchups, /league/:leagueId/matchups/:week
+	MatchupCard, ScoreBreakdown, WeekSwitcher, TeamCompareTable
+	currentWeek, matchups[], selectedMatchup
+	GET /leagues/:id/matchups?week=, GET /matchups/:id
+	Requires auth + membership; week navigation limited to season range
+	Standings
+	/league/:leagueId/standings
+	StandingsTable, TieBreakerInfo, SortByDropdown
+	Standings[], sortMode, tieBreakers
+	GET /leagues/:id/standings
+	Membership required; display tie-breaker rules consistently
+	Chat
+	/league/:leagueId/chat
+	MessageList, MessageComposer, Emoji/Reactions, SystemMessageRow
+	Messages[], draftMessage, isConnected, unreadCount
+	GET /leagues/:id/messages, POST /leagues/:id/messages
+	Membership required; simple anti-spam; sanitize/escape content
+	Settings
+	/settings, /league/:leagueId/settings (commissioner settings)
+	ProfileForm, PasswordChange, LeagueSettingsForm, InviteManager, DangerZone
+	profileDraft, leagueSettingsDraft, inviteCodes[], saveStatus/errors
+	GET/PUT /users/me, GET/PUT /leagues/:id/settings, POST /leagues/:id/invites, DELETE /leagues/:id
+	League settings commissioner-only; dangerous actions require confirm modal; validate league settings (draft time, roster size, etc)
+	6.2 Backend Modules
+Module
+	Responsibilities
+	Key Data Entities
+	Auth
+	This will facilitate the authentication process and creation of the auth_token for the user
+	Users
+	League
+	This will manage which users are in a given league, who runs the league, as well as storing the leagues rankings and their specified settings
+	Leagues, Users, User_Team
+	Draft
+	This will manage when a user is able to draft and store their selected picks on their team roster
+	User_Team, Players
+	Roster and Lineup
+	This will display the users roster and their selected lineup for the user to update between each week
+	User_Team, Players
+	Transactions
+	This will be used to manage the trades between users in a league, it will update both users roster once they both agree to a proposed trade
+	User_Team, Players
+	Matchups and Scoring
+	This will manage the weekly matchups as well as displaying the live scores throughout the week and then storing the final result end the end of each week of games
+	User_Team, Game Results
+	Standings and Playoffs
+	This will store the leagues standings and will update these standings after the final result from weekly matchups. Towards the end of the main season, the program will select top ranked users for the playoffs
+	Users, League
+	Chat
+	This will connect users to each other and open chat rooms to allow them to discuss trades and talk to their opponents each week
+	Users
+	6.3 Key Runtime Scenarios
+                                    * Scenario R-01: [Draft pick submitted]
+                                    * Trigger: User clicks “Draft” on a player in UI-13 Draft Room.
+                                    * Preconditions: League state = Draft In Progress; user is a league member; it is the user’s turn; player is available (not already drafted).
+Steps:
+                                    1. Frontend submits pick request with leagueId, playerId.
+                                    2. Backend validates token and membership.
+                                    3. Backend checks current pick owner == user AND timer not expired.
+                                    4. Backend checks player not already drafted and roster limits allow selection.
+                                    5. Backend creates DraftPick record and assigns player to the user’s team roster.
+                                    6. Backend advances the draft state to next pick and returns updated draft snapshot.
+                                    7. Frontend updates draft board, roster preview, and turn indicator. Postconditions: Pick is persisted; player marked unavailable; current pick advances.
+Failure cases:
+                                    * Not user’s turn → 403/409 with message (“Not your pick”).
+                                    * Player already drafted → 409.
+                                    * Draft paused/ended → 409.
+                                    * Network failure → UI shows retry + local “pending” cleared.
+                                    * Scenario R-02: [Auto-pick on timer expiration]
+                                    * Trigger: Pick timer expires for current pick owner
+                                    * Preconditions: League state = Draft In Progress; timer reaches 0; backend has draft order and pick index.
+Steps:
+                                       1. Backend detects timer expiration (scheduled job / server timer / draft tick endpoint).
+                                       2. Backend selects best available player using priority rules:
+                                       * If user has a queue → highest-ranked available from queue.
+                                       * Else → highest-ranked available player overall (by default ranking).
+                                       3. Backend creates DraftPick and assigns player to team roster.
+                                       4. Backend advances to next pick and resets timer.
+                                       5. Frontend (polling or push) receives updated draft state and shows “Auto-pick occurred” banner.
+Postconditions: A valid pick is made and persisted; draft continues without stalling.
+Failure cases:
+
+                                          * No players available → draft ends early with “Draft Complete (insufficient pool)”.
+                                          * External ranking unavailable → fallback to internal default ordering.
+                                          * Scenario R-03: [Lineup lock enforcement]
+                                          * Trigger: User attempts to save lineup in UI-15 My Team OR lock time passes.
+                                          * Preconditions: User is team owner; league state = Season Active; week is known; lock timestamp exists.
+Steps:
+                                          1. Frontend requests GET /leagues/:id/rules (or lock info) and displays lock countdown.
+                                          2. User edits starters/bench and clicks Save.
+                                          3. Backend validates lock: if current time >= lock time, reject update.
+                                          4. If before lock, backend validates lineup constraints (positions/roster membership).
+                                          5. Backend persists lineup and returns updated lineup object.
+Postconditions: Lineup saved if before lock; after lock, lineup remains unchanged and read-only.
+Failure cases:
+                                             * After lock → 409 “Lineup locked for Week X”.
+
+                                             * Invalid position constraints → 400 with field-level message.
+
+                                             * Player not on roster → 400/404.
+
+
+                                                * Scenario R-04: [Add or drop player with roster full]
+                                                * Trigger: User clicks Add/Drop from UI-18 Players or UI-15 My Team.
+                                                * Preconditions: League state allows transactions (Season Active); user is team owner; roster size limit defined.
+Steps:
+                                                1. Frontend initiates add/drop request.
+                                                2. Backend checks roster size:
+                                                * If adding and roster is full → require drop+add as one atomic transaction.
+                                                3. Backend validates player availability (not already rostered elsewhere if your rules require exclusivity).
+                                                4. Backend updates roster and logs Transaction record.
+                                                5. Backend returns updated roster.
+Postconditions: Roster updated correctly; transaction recorded.
+Failure cases:
+Roster full and no drop selected → 409 “Roster full”.
+                                                   * Player unavailable → 409.
+                                                   * After transaction deadline/lock → 409.
+________________
+
+
+7. Data Model and Persistence
+7.1 ER Diagram
+Figure DB-01: ER Diagram
+
+
+   
+7.2 Entity Catalog
+For each entity: Purpose, Primary Keys, Foreign Keys, Key fields, Constraints.
+User
+                                                   * Purpose: This table will be used to store each of the users on the application, it will store their username and unique user id that will be used to identify team ownership and league membership for use throughout the program.
+
+                                                   * Keys: 
+                                                      * user_id: int
+                                                      * username: String
+
+                                                         * Key fields:
+                                                         * Primary Key: user_id
+                                                         * Foreign Key: user_id
+
+                                                            * Constraints:
+                                                            * user_id: auto incrementing
+League
+                                                            * Purpose: This table will be used to define each created league within the program. It will store the sport the league is for, who the commissioner is, along with the defined settings for the league.
+
+                                                            * Keys:
+                                                               * league_id: int
+                                                               * sport_id: int
+                                                               * rankings: JSON Map<String, dynamic>
+
+                                                                  * Key fields:
+                                                                  * Primary Key: league_id
+
+                                                                     * Constraints:
+                                                                     * league_id: auto incrementing
+
+User_Team
+                                                                        * Purpose: This table will be used to define each created team for users to access. It will define the league it is assigned to, the user who manages it, as well as storing a JSON map of the user’s lineup for their personal roster.
+
+
+                                                                        * Keys:
+                                                                           * user_id: int
+                                                                           * team_id: int
+                                                                           * league_id: int
+
+                                                                              * Key fields:
+                                                                              * Primary Key: team_id
+                                                                              * Foreign Keys: user_id, league_id
+
+                                                                                 * Constraints:
+                                                                                 * team_id: auto incrementing
+
+
+Player
+                                                                                    * Purpose: Stores player identity and stats pulled from external sports data sources.
+
+                                                                                    * Keys:
+                                                                                       * player_id: int
+                                                                                       * college_id: int
+                                                                                       * sport_id: int
+                                                                                       * name: String
+                                                                                       * personal_stats: JSON Map<String, dynamic>
+
+
+                                                                                          * Key fields:
+                                                                                          * Primary Key: player_id
+                                                                                          * Foreign Key: college_id
+
+                                                                                             * Constraints: None
+College
+                                                                                             * Purpose: This table will define each college that is a part of the National College Athletic Association (NCAA). It will store a unique college id, as well as the college’s name and their division to be accessed throughout the app and referenced by other tables.
+
+
+                                                                                             * Keys:
+                                                                                                * college_id: int
+                                                                                                * name: String
+                                                                                                * division: String
+
+
+                                                                                                   * Key fields:
+                                                                                                   * Primary Key: college_id
+
+                                                                                                      * Constraints: None
+
+Game_Results
+                                                                                                         * Purpose: This table will store the results from each game throughout the season to be referenced after each week to display for the users. It will store a unique key with the home team id and away team id along with  JSON Map to store the results from each match.
+
+                                                                                                         * Keys:
+                                                                                                            * home_id: int
+                                                                                                            * away_id: int
+                                                                                                            * results: JSON Map<String, int>
+
+                                                                                                               * Key fields:
+                                                                                                               * Primary Keys: home_id, away_id
+
+                                                                                                                  * Constraints:
+                                                                                                                  * Unique Key: match(home_id, away_id)
+Draft
+                                                                                                                  * Purpose: Stores draft configuration and current progress for a league.
+                                                                                                                  * Primary Keys: draft_id: int
+                                                                                                                  * Foreign Keys: league_id: int
+                                                                                                                  * Key fields: draft_type (snake), pick_time_seconds, round_count, status, current_pick_number, started_at, ended_at
+                                                                                                                  * Constraints: draft_id auto-increment; one draft per league (unique league_id); status enum {Scheduled, InProgress, Paused, Complete}
+DraftPick
+                                                                                                                  * Purpose: Stores each individual pick made during a draft.
+                                                                                                                  * Primary Keys: pick_id: int
+                                                                                                                  * Foreign Keys: draft_id, league_id, team_id, user_id, player_id
+                                                                                                                  * Key fields: overall_pick, round_number, pick_in_round, is_auto, picked_at
+                                                                                                                  * Constraints: pick_id auto-increment; unique(draft_id, overall_pick); unique(draft_id, player_id) (player drafted once)
+Matchup
+                                                                                                                  * Purpose: Represents a head-to-head matchup between two teams for a given week.
+                                                                                                                  * Primary Keys: matchup_id: int
+                                                                                                                  * Foreign Keys: league_id, home_team_id, away_team_id
+                                                                                                                  * Key fields: week, home_score, away_score, status
+                                                                                                                  * Constraints: matchup_id auto-increment; unique(league_id, week, home_team_id, away_team_id); status enum {Upcoming, Live, Final}
+LineupSlot
+                                                                                                                  * Purpose: Stores a team’s lineup selections per week (supports lineup lock + validation).
+                                                                                                                  * Primary Keys: slot_id: int
+                                                                                                                  * Foreign Keys: team_id, player_id (nullable if slot empty)
+                                                                                                                  * Key fields: week, position, is_starter
+Constraints: slot_id auto-increment; unique(team_id, week, position, is_starter); player_id must belong to team roster when set
+Message (Chat)
+                                                                                                                     * Purpose: Stores chat messages for a league.
+                                                                                                                     * Primary Keys: message_id: int
+                                                                                                                     * Foreign Keys: league_id, user_id
+                                                                                                                     * Key fields: text, created_at
+                                                                                                                     * Constraints: message_id auto-increment; text NOT NULL; optional max length (e.g., 500–2000 chars)
+________________
+
+
+8. API and Interface Contracts
+8.1 API Style
+                                                                                                                     * Protocol: We will be using HTTP to encode and deliver our requests throughout the program, this will be used to fetch live scores from ongoing games as well as fetching player stats and information to be displayed for the user.
+
+                                                                                                                     * Format: We will be using a JSON format method to be delivered with our HTTP requests to make a simple and easy to encode and then decode our responses.
+
+                                                                                                                     * Auth: Once each user logins and receives a positive authentication, we will generate a JSON Web Token to store that authentication so the user maintains authentication during each session. This token will be stored using the browser’s cookie storage to help protect the token and ensure consistent access.
+
+                                                                                                                     * Error format: We will generate error messages into a JSON Map to deliver to the program’s front in order to be able to decode and display the user’s error and inform them on what feature may have broken or what problem may have occurred that created a breakpoint within the software.
+
+
+
+8.2 Endpoint Catalog
+Endpoint
+	Method
+	Used by Screens
+	Request
+	Response
+	Errors
+	/auth/login
+	POST
+	UI-02
+	This will authenticate the user’s information
+	Will return either an error or a auth_token
+	Will return when authentication fails.
+	/leagues
+	GET
+	UI-06
+	This will list each of the leagues associated with the user
+	It will return each of their leagues
+	It will return an error if it cannot find any leagues for the user
+	/leagues/{id}
+	GET
+	UI-09
+	This will fetch the league information for the user
+	It will return their league and the team they have set for the league
+	It will return an error if there isn’t a team or it is unable to find the league
+	/draft/{id}/pick
+	POST
+	UI-13
+	This will send a request to fetch the player information and officially add them to the user’s roster
+	It will store the player to the user’s roster and return a success message once stored
+	It will return an error if the program is unable to successfully store the drafted player into the user’s roster
+	/update/rosters
+	
+POST
+	
+UI-15
+	This will send the request to update a user’s roster with their changes
+	It will store the updated JSON Map in the database and return a success message when stored.
+	If it is unable to store the data it will return an error alerting the user there was an issue
+	/api.collegefootballdata/scorboard
+	
+GET
+	
+UI-22
+	This will fetch the live score data from college football games
+	It will display the scores from the games for the users to view their points awarded
+	If it is unable to establish a connection or retrieve data it will alert the user that there was an error
+	/api.collegebasketballdata.com/games
+	
+GET
+	
+UI-22
+	This will fetch the live score data from college basketball games
+	It will display the scores from the games for the users to view their points awarded
+	If it is unable to establish a connection or retrieve data it will alert the user that there was an error
+	/mlb-college-baseball-api.p.rapidapi.com/box-scores/{id}
+	
+GET
+	
+UI-22
+	This will fetch the live score data from college football games
+	It will display the scores from the games for the users to view their points awarded
+	If it is unable to establish a connection or retrieve data it will alert the user that there was an error
+	8.3 External Interfaces
+                                                                                                                        * Sports data provider: We will be populating the full player rosters and colleges from three separate API sources to populate our college and players data tables to be accessed throughout the app.
+                                                                                                                        * Football: /api.collegefootballdata/roster
+                                                                                                                        * Basketball: /api.collegebasketballdata.com/teams/roster
+                                                                                                                        * Baseball: https://mlb-college-baseball-api.p.rapidapi.com/players
+
+________________
+
+
+9. Security and Access Control[g][h]
+Access control is a core design concern and should be addressed explicitly.
+9.1 Authentication
+Method: JWT-based authentication. Users authenticate using email and password. Upon successful login, a signed JWT access token is issued.
+Session Management Approach: Stateless session management using short-lived access tokens and refresh tokens. Tokens include expiration timestamps and are validated on each request.
+________________
+
+
+9.2 Authorization
+Roles:
+                                                                                                                           * Member: Can join leagues, draft players, manage roster, create trades, and participate in chat.
+
+                                                                                                                           * Commissioner: All member privileges plus league creation, draft control, trade approval (if enabled), and league settings management.
+
+Enforcement Points:
+ Authorization is enforced through backend middleware for token validation and role verification, with additional service-layer checks to restrict access to league-specific resources.
+________________
+
+
+9.3 Data Protection
+Password Storage: Passwords are hashed using BCrypt with salting to prevent brute-force and rainbow table attacks.
+Transport Security: All client-server communication is encrypted using TLS (HTTPS).
+Sensitive Fields: Passwords, email addresses, authentication tokens, trade transactions, private league data, and chat messages.
+________________
+10. Quality, Performance, and Scalability[i]
+This section should be concise and focused on nonfunctional goals.
+10.1 Performance Targets
+                                                                                                                              * Expected concurrent users:
+100–300 concurrent users during peak draft times (MVP assumption)
+
+
+                                                                                                                              * Expected league count:
+200–500 leagues for MVP deployment.
+
+
+                                                                                                                              * Data refresh frequency:
+                                                                                                                                 * Player stats refreshed every 5–10 minutes during active games.
+                                                                                                                                 * Standings recalculated after each scoring update.
+                                                                                                                                 * Draft updates processed in real time (WebSocket or short polling).
+
+10.2 Scalability Strategy
+                                                                                                                                    * [Caching approach]
+                                                                                                                                    * Reduce the number of third-party API calls by caching external sports data answers.
+                                                                                                                                    * Computed matchup scores and league standings are cached.
+                                                                                                                                    * For draft state and frequently used data, use an in-memory cache (such as Redis).
+
+
+                                                                                                                                       * [Database indexing approach]
+                                                                                                                                       * Index foreign keys (league_id, user_id, player_id).
+                                                                                                                                       * Index frequently queried fields (league_id in Matchups, sport_id in Player).
+                                                                                                                                       * Unique constraints on draft picks to prevent duplicate ownership.\
+
+
+                                                                                                                                          * [Horizontal scaling approach if relevant]
+                                                                                                                                          * To enable horizontal scaling, the backend will be developed as a stateless REST API.
+                                                                                                                                          * Docker will be used to containerize applications for future multi-instance deployment.
+                                                                                                                                          * If necessary, a load balancer can divide traffic among backend instances.
+
+
+________________
+
+
+11. Deployment and Operations[j]
+11.1 Environments
+                                                                                                                                             * Development
+                                                                                                                                             * Local developer machines.
+                                                                                                                                             * Local database instance.
+                                                                                                                                             * Mock or sandbox sports data API.
+
+
+                                                                                                                                                * Test
+                                                                                                                                                * Cloud-hosted environment mirroring production configuration.
+                                                                                                                                                * Will be used for integration testing and UI validation.
+                                                                                                                                                * Test leagues and mock users.
+
+
+                                                                                                                                                   * Production
+                                                                                                                                                   * Cloud hosting platform (e.g., AWS, Render, Railway, or similar).
+                                                                                                                                                   * Managed database service (PostgreSQL or MySQL).
+                                                                                                                                                   * HTTPS enabled with TLS encryption.
+
+
+11.2 Deployment Architecture
+Figure DEP-01: Deployment Diagram
+  
+11.3 Logging and Monitoring
+                                                                                                                                                      * Logging approach:
+For operational monitoring, auditing, and troubleshooting, NextPlay shall use server-side logging to capture important system events and errors. Only authorized administrators shall be able to access the safely stored logs. User authentication activities, league setup and configuration modifications, draft actions, roster transactions, score updates, and external API failures are all considered logged events.
+
+
+                                                                                                                                                      * Basic metrics: 
+The system shall track basic operational metrics, including:
+                                                                                                                                                         * API request latency: average response time under 300 ms under normal load and < 1 second during peak usage.
+
+                                                                                                                                                         * Error rate: maintain < 2% failed requests (HTTP 4xx/5xx combined) under normal operation; log all 5xx errors.
+
+                                                                                                                                                         * External API performance: record success/failure rate and response time for each external sports API request.
+
+                                                                                                                                                         * Database query latency: database queries shall complete within 200 ms under normal load and 500 ms during peak usage.
+
+                                                                                                                                                         * Draft pick processing time: draft pick submissions shall be processed and confirmed within 2 seconds of user selection.
+
+                                                                                                                                                         * Scoring update frequency: the system shall update scoring at least every 5 minutes during active games and finalize matchup results within 10 minutes after official game completion data is available.
+
+
+
+
+
+________________
+
+
+12. Testing Strategy
+12.1 Unit Testing
+                                                                                                                                                            * Scope:
+                                                                                                                                                            * User authentication validation (login, registration input checks).
+
+                                                                                                                                                            * League creation and invite validation (invalid/expired invite, league full).
+
+                                                                                                                                                            * Draft logic (snake order reversal, preventing duplicate picks, auto-draft selection rules).
+        
+                                                                                                                                                            * Roster and lineup constraints (roster size, lineup lock rules, preventing duplicate ownership).
+
+                                                                                                                                                            * Scoring calculations (points per stat category, active lineup only).
+
+                                                                                                                                                            * Tie-breaker rules for standings and weekly matchups.
+
+
+                                                                                                                                                               * Tools:
+                                                                                                                                                               * Backend unit tests using TBD (based on implementation language) (e.g., PyTest for Python, JUnit for Java, Jest for Node).
+
+                                                                                                                                                               * Mock external API responses for deterministic scoring tests.
+
+
+12.2 Integration Testing
+                                                                                                                                                                  * Scope:
+                                                                                                                                                                  * League formation → invite creation → user joins league flow.
+                                                                                                                                                                  * Multiple teams' draft workflow (manual picks plus auto-picks on timeout).
+                                                                                                                                                                  * Pickup/drop transactions with constraint enforcement and database updates.
+                                                                                                                                                                  * The scoring update pipeline consists of retrieving data from an external API, computing the score, and updating the matchup.
+                                                                                                                                                                  * Commissioner-only acts vs normal league member actions are examples of role enforcement.
+
+
+
+                                                                                                                                                                     * Tools:
+                                                                                                                                                                     * automated integration testing or Postman-based API testing.
+                                                                                                                                                                     * Seeded sample leagues, teams, and players are included in the test database.
+                                                                                                                                                                     * Mock servers or recorded answers (TBD) are used to replicate external API requests.
+
+
+
+12.3 End-to-End Testing
+                                                                                                                                                                        * Core flows tested:
+                                                                                                                                                                        * WF-01: Create League → Generate Invite → Join League → View League Dashboard.
+                                                                                                                                                                        * WF-02: Enter Draft → Draft Players (Snake/Auto) → View Final Rosters.
+                                                                                                                                                                        * WF-03: Set Lineup → Scoring Update → View Matchup Results → View Updated Standings.
+                                                                                                                                                                        *                                                                                                                                                                         * Validation
+                                                                                                                                                                        * accuracy of user interface navigation and uniform data presentation throughout pages.
+                                                                                                                                                                        * checks for permissions in all user workflows.
+                                                                                                                                                                        * Error handling for invalid actions (locked lineup, full roster, out-of-turn draft pick).
+                                                                                                                                                                        * stability of the system during the draft period, or simulated peak usage.
+
+
+
+
+________________
+
+
+13. Traceability to SRS[k][l]
+
+
+SRS Requirement
+	Design Evidence
+	3.1 User Account Management & Authentication
+	UI-02, UI-05; Modules: 6.1 Auth + 6.2 Auth; API: /auth/login, /auth/me; Entities: User
+	3.2 Fantasy Sport Selection
+	UI-06 (sport selected during Create League); Entity: League.sport\_id; External interfaces 8.3
+	3.3 League Creation & Secure Invites
+	WF-01; UI-06/UI-07/UI-09; API: /leagues, /leagues/join; Entities: League, User\_Team
+	3.4 League Settings & Commissioner Controls
+	UI-10; Gating Matrix 5.3; Modules: Settings/League Shell; API: league settings/invite endpoints (as implemented)
+	3.5 Draft System (Snake / Auto Draft)
+	WF-02; UI-12/UI-13/UI-14; Runtime: R-01/R-02; Entity: Draft, DraftPick
+	3.6 Roster and Lineup Management
+	UI-15; Runtime: R-03; Entities: User\_Team, LineupSlot
+	3.7 Available Player Pickup/Drop
+	UI-18 + UI-15; Runtime: R-04; Entity: Transaction (if implemented)
+	3.8 Scoring and Weekly Matchups
+	UI-22/UI-23; WF-03; Backend module "Matchups and Scoring"; Entities: Matchup, Game\_Results
+	3.9 Standings and League Playoffs
+	UI-25; API: standings endpoint (as implemented); Entities: League.rankings / Matchup results
+	3.10 Basic Trade System (Simple Proposal)
+	Backend module "Transactions"; Scope 1.2 In Scope (basic proposal flow)
+	3.11 League-wide Chat
+	UI-28; Chat module; Entity: Message; API: /leagues/:id/messages
+	3.12 Platform Constraints & Security
+	Constraints 2.1; Security 9.0; Architecture 4.2; Logging 11.3
+	3.13 Optional Predictive Insights
+	Out of scope for MVP (see 1.2 Out of scope)
+	3.14 Performance and Scalability
+	Section 10.0
+	3.15 Maintainability & Testing
+	Design Goals 2.3; Testing Strategy 12.0; Backend Modules 6.2
+	
+
+________________
+
+
+14. Risk + Mitigation 
+
+
+Risk
+	Impact
+	Mitigation (Plan B)
+	Status
+	External sports API down / schema changes
+	High
+	Cache last-known-good responses; retry/backoff; allow manual refresh; use mock/seed data for demos/tests
+	Open
+	Real-time draft too hard
+	Medium
+	Polling MVP (already chosen); if websockets fail, keep draft as periodic refresh
+	Open
+	Scoring rules not finalized early
+	High
+	Lock one sport’s scoring first; keep rules in config file; add test fixtures for point totals
+	In Progress
+	Trades/transactions too big for MVP
+	Medium
+	Defer full trade flow; support add/drop only; keep Transaction entity optional
+	Open
+	Hosting/DB issues (free tier limits)
+	Low
+	Use Render/Railway fallback; keep DB migrations simple; keep seed script for rebuild
+	Open
+	Data inconsistency between sources
+	High
+	Use one primary source for player IDs; cross-reference stats from secondary sources; manual admin override for disputed stats (if necessary)
+	Open
+	Poor UI performance with large player lists
+	Medium
+	Implement server-side pagination and filtering for player browsing; cache API responses for player list
+	Open
+	Security vulnerability (e.g., SQL Injection)
+	High
+	Use parameterized queries/ORMs; validate and sanitize all user input; employ security scanning tools in CI/CD
+	Open
+	
+
+________________
+
+
+Figure Index
+Figure ID
+	Title
+	CTX-01
+	System Context Diagram
+	ARC-01
+	Container Diagram
+	UI-01
+	UI Map (Sitemap / Navigation Map)
+	WF-01
+	Create League to Invite to Join
+	WF-02
+	Draft Lobby to Draft Room to Draft Results
+	WF-03
+	My Team to Matchup Detail to Standings
+	UI-COMP-01
+	Component Kit Overview
+	UI-02
+	Login Screen
+	UI-05
+	User Dashboard
+	UI-09
+	League Overview
+	UI-13
+	Live Draft Interface
+	UI-15
+	Team Roster and Lineup
+	UI-18
+	Player Browser
+	UI-23
+	Weekly Matchup View
+	UI-25
+	Standings View
+	DB-01
+	ER Diagram
+	DEP-01
+	Deployment Diagram
+	 
+Milestones
+
+
+Milestone
+	Target Date
+	Deliverables
+	MVP Alpha (Core Skeleton)
+	03/10/2026
+	Auth + basic routing + dashboard shell; can create/join league and navigate league shell.
+	MVP Beta (Draft Data Flow)
+	03/24/2026
+	Draft lobby + draft room UI; draft state persisted; draft picks recorded; basic auto-pick logic.
+	Feature Complete (League Gameplay)
+	04/07/2026
+	Team roster + lineup editor; lineup lock enforcement; player browsing/filtering; add/drop (or stubbed transaction flow).
+	Scoring/Matchups Complete
+	04/16/2026
+	Matchups view + standings populated from game results; scoring refresh working (polling acceptable).
+	Integration + End-to-End Pass
+	04/23/2026
+	End-to-end league lifecycle run-through: create → invite → draft → set lineup → matchup → standings; bug fixes + data sanity checks.
+	Final Polish + Submission Ready
+	04/28/2026
+	UI polish, error/empty states, deployment hardening, documentation/screenshots finalized; final test run for demo.
+	
+
+[a]also figure we can double check n make sure we meet the checklist like i think the implementation plan and stuff we can prolly add. also accessibility maybe, think in a broad sense, shortcuts etc
+[b]to be finished by tonight
+[c]Ahmad Adel
+[d]Kaden
+[e]to be finished by tonight
+[f]to be finished by tonight
+[g]Ahmad Adel
+[h]to be finished by tonight
+[i]Karimi
+[j]Karimi
+[k]Kaden Hunt
+[l]to be finished by tonight
