@@ -8,7 +8,7 @@ export default function DevModeToggle() {
       type="button"
       onClick={toggleDevMode}
       className="group inline-flex items-center gap-2.5 rounded-full border border-zinc-700/60 bg-zinc-900/80 px-3 py-1.5 text-xs font-medium backdrop-blur transition-all hover:border-zinc-600 hover:bg-zinc-800/80"
-      title="Dev mode: demo shortcuts and synthetic data fills (mock API is separate — see banner below)."
+      title="Dev mode toggle"
     >
       <span className={`transition-colors ${devMode ? 'text-red-400' : 'text-zinc-500'}`}>
         Dev

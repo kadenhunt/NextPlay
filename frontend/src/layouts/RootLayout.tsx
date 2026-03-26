@@ -1,19 +1,100 @@
+import { useEffect, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 import { Link, Outlet, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/providers/AuthProvider'
 import { useDevMode } from '@/providers/DevModeProvider'
 import TopTicker from '@/components/TopTicker'
 import DevModeToggle from '@/components/DevModeToggle'
-import { USES_MOCK_BACKEND } from '@/services/api/nextplayApi'
+import { listMyLeagues } from '@/services/api/nextplayApi'
+
+type DemoStep = {
+  path: string
+  waitMs: number
+  label: string
+}
 
 export default function RootLayout({ children }: PropsWithChildren) {
   const { status, user, logout } = useAuth()
   const { devMode } = useDevMode()
   const navigate = useNavigate()
+  const [demoPlaying, setDemoPlaying] = useState(false)
+  const [demoStepIdx, setDemoStepIdx] = useState(0)
+  const userId = user?.id
+
+  const leaguesQuery = useQuery({
+    queryKey: ['myLeagues', userId],
+    queryFn: () => listMyLeagues(userId!),
+    enabled: Boolean(userId),
+  })
+
+  const demoSteps = useMemo<DemoStep[]>(() => {
+    let leagueId = ''
+    const baseballLeagueId = leaguesQuery.data?.find((l) => l.sport === 'baseball')?.id ?? ''
+    try {
+      leagueId = localStorage.getItem('nextplay.demo.lastLeagueId') ?? ''
+    } catch {
+      /* noop */
+    }
+
+    // Prefer baseball for richer seeded demo data.
+    if (baseballLeagueId) {
+      leagueId = baseballLeagueId
+    } else if (!leagueId) {
+      leagueId = leaguesQuery.data?.[0]?.id ?? ''
+    }
+
+    if (!leagueId) {
+      return [{ path: '/dashboard', waitMs: 4200, label: 'Dashboard' }]
+    }
+
+    return [
+      { path: '/dashboard', waitMs: 4500, label: 'Dashboard' },
+      { path: `/league/${leagueId}`, waitMs: 4200, label: 'League overview' },
+      { path: `/league/${leagueId}/draft`, waitMs: 5200, label: 'Draft' },
+      { path: `/league/${leagueId}/team`, waitMs: 7000, label: 'Team scoring' },
+      { path: `/league/${leagueId}/players`, waitMs: 5600, label: 'Players' },
+      { path: `/league/${leagueId}/matchups`, waitMs: 7600, label: 'Matchups' },
+      { path: `/league/${leagueId}/standings`, waitMs: 5200, label: 'Standings' },
+      { path: `/league/${leagueId}/chat`, waitMs: 4200, label: 'Chat' },
+      { path: '/dashboard', waitMs: 3400, label: 'Wrap up' },
+    ]
+  }, [leaguesQuery.data])
 
   const onLogout = () => {
     logout()
     navigate('/login', { replace: true })
+  }
+
+  useEffect(() => {
+    if (!demoPlaying) return
+    const step = demoSteps[demoStepIdx]
+    if (!step) {
+      setDemoPlaying(false)
+      setDemoStepIdx(0)
+      return
+    }
+
+    navigate(step.path)
+    const t = window.setTimeout(() => {
+      if (demoStepIdx >= demoSteps.length - 1) {
+        setDemoPlaying(false)
+        setDemoStepIdx(0)
+      } else {
+        setDemoStepIdx((i) => i + 1)
+      }
+    }, step.waitMs)
+    return () => window.clearTimeout(t)
+  }, [demoPlaying, demoStepIdx, demoSteps, navigate])
+
+  const onToggleDemoPlay = () => {
+    if (demoPlaying) {
+      setDemoPlaying(false)
+      setDemoStepIdx(0)
+      return
+    }
+    setDemoStepIdx(0)
+    setDemoPlaying(true)
   }
 
   return (
@@ -47,6 +128,20 @@ export default function RootLayout({ children }: PropsWithChildren) {
 
           <div className="flex items-center gap-3">
             <DevModeToggle />
+            {devMode && status === 'authenticated' && user ? (
+              <button
+                type="button"
+                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 ${
+                  demoPlaying
+                    ? 'border-red-500/30 bg-red-500/10 text-red-300'
+                    : 'border-zinc-700/60 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100'
+                }`}
+                onClick={onToggleDemoPlay}
+                title="Dev demo autoplay navigation"
+              >
+                {demoPlaying ? 'Stop Demo' : 'Play Demo'}
+              </button>
+            ) : null}
 
             {status === 'authenticated' && user ? (
               <button
@@ -64,20 +159,11 @@ export default function RootLayout({ children }: PropsWithChildren) {
           </div>
         </div>
 
-        {USES_MOCK_BACKEND && (
-          <div className="border-t border-zinc-800/90 bg-zinc-900/70 px-4 py-1.5 text-center text-[11px] leading-snug text-zinc-500">
-            <span className="font-semibold text-zinc-400">Mock API</span>
-            {' — '}
-            In-browser stub with local storage only. Next step: real DB + API; this stays obvious on purpose.
+        {devMode && demoPlaying && demoSteps[demoStepIdx] ? (
+          <div className="border-t border-zinc-800/90 bg-zinc-900/70 px-4 py-1.5 text-center text-[11px] text-zinc-400">
+            Demo step {demoStepIdx + 1}/{demoSteps.length}: {demoSteps[demoStepIdx].label}
           </div>
-        )}
-
-        {devMode && (
-          <div className="border-t border-red-500/20 bg-red-500/[0.06] px-4 py-1.5 text-center text-[11px] font-medium leading-snug tracking-wide text-red-400/90">
-            Dev mode — Demo-only tools: state shortcuts, commissioner bypass, and synthetic season rows when a league
-            shell is empty. Turn off for the plain mock experience.
-          </div>
-        )}
+        ) : null}
 
         <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
       </header>

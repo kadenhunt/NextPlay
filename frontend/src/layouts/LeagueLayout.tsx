@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '@/providers/AuthProvider'
@@ -31,6 +32,15 @@ function LeagueLayoutInner() {
   const { user } = useAuth()
   const { status, league, error, userRole } = useLeague()
   const { devMode } = useDevMode()
+
+  useEffect(() => {
+    if (!id) return
+    try {
+      localStorage.setItem('nextplay.demo.lastLeagueId', id)
+    } catch {
+      /* noop */
+    }
+  }, [id])
 
   const myTeamQuery = useQuery({
     queryKey: ['myTeamState', id, user?.id],

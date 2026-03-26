@@ -158,36 +158,21 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {devMode && (
-        <div className="rounded-xl border border-red-500/20 bg-red-500/[0.03] p-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-red-400/80">Dev — mock data</p>
-              <p className="mt-1 max-w-xl text-sm text-zinc-400">
-                Restore leagues to the built-in demo seed (mix of created / draft / season states). No need to clear site data. You can also jump states from a league’s Overview when dev mode is on.
-              </p>
-            </div>
-            <Button
-              variant="destructive"
-              isLoading={resetDemoMutation.isPending}
-              onClick={() => {
-                if (window.confirm('Reset all mock leagues and draft data to the demo seed?')) {
-                  resetDemoMutation.mutate()
-                }
-              }}
-            >
-              Reset demo data
-            </Button>
-          </div>
-          {resetDemoMutation.isError && (
-            <p className="mt-2 text-sm text-red-400">
-              {resetDemoMutation.error instanceof Error
-                ? resetDemoMutation.error.message
-                : 'Reset failed.'}
-            </p>
-          )}
+      {devMode ? (
+        <div className="flex justify-end">
+          <Button
+            variant="secondary"
+            isLoading={resetDemoMutation.isPending}
+            onClick={() => {
+              if (window.confirm('Reset all mock leagues and draft data to the demo seed?')) {
+                resetDemoMutation.mutate()
+              }
+            }}
+          >
+            Reset data
+          </Button>
         </div>
-      )}
+      ) : null}
 
       {/* League cards */}
       {leaguesQuery.isLoading ? (
