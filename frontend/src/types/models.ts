@@ -54,6 +54,47 @@ export const PlayerStatus = {
 } as const
 export type PlayerStatus = (typeof PlayerStatus)[keyof typeof PlayerStatus]
 
+export type ScoringLine = {
+  /** e.g. Pass TD, Passing yards */
+  label: string
+  /**
+   * Raw stat volume: # of TDs, catches, yards, etc.
+   * (Final product: from box score / stat feed.)
+   */
+  quantity: number
+  /**
+   * Fantasy points per scoring unit when `yardsDivisor` is unset: `points = quantity × pointsPerUnit`.
+   * When `yardsDivisor` is set: `points = (quantity ÷ yardsDivisor) × pointsPerUnit`.
+   */
+  pointsPerUnit: number
+  /** Set for yard-based lines; quantity is yards. */
+  yardsDivisor?: number
+  points: number
+}
+
+/** Per-player fantasy points from stat lines (final product: week-locked actuals vs projection). */
+export type PlayerScoringBreakdown = {
+  fantasyTotal: number
+  isProjected: boolean
+  lines: ScoringLine[]
+}
+
+export type StarterWeekScoring = {
+  playerId: PlayerId
+  playerName: string
+  position: string
+  breakdown: PlayerScoringBreakdown
+}
+
+/** Roster rollup for one matchup week — starters count toward H2H score; bench shown for context. */
+export type TeamWeekScoring = {
+  week: number
+  starterTotal: number
+  benchTotal: number
+  starters: StarterWeekScoring[]
+  bench: StarterWeekScoring[]
+}
+
 export type Player = {
   id: PlayerId
   name: string
@@ -62,6 +103,8 @@ export type Player = {
   status: PlayerStatus
   drafted: boolean
   projectedPoints: number
+  /** Present on player detail fetches; list endpoints omit for payload size. */
+  scoringBreakdown?: PlayerScoringBreakdown
 }
 
 export type DraftPick = {
@@ -120,6 +163,8 @@ export type TeamState = {
   team: FantasyTeam
   isLineupLocked: boolean
   rosterCap: number
+  /** When present, mock shows how this week’s lineup adds up (starters vs bench). */
+  weekScoring?: TeamWeekScoring
 }
 
 export type MatchupStatus = 'UPCOMING' | 'LIVE' | 'FINAL'
@@ -134,6 +179,25 @@ export type Matchup = {
   status: MatchupStatus
   homeScore?: number
   awayScore?: number
+  /** Lineup projection (fantasy pts) — shown before/during live week for demos */
+  homeProjected?: number
+  awayProjected?: number
+}
+
+/** One side of a matchup: starter rollups + per-player stat lines (Team page parity). */
+export type MatchupSideLineupScoring = {
+  teamId: TeamId
+  teamName: string
+  starterTotal: number
+  starters: StarterWeekScoring[]
+}
+
+export type MatchupLineupScoring = {
+  matchupId: string
+  week: number
+  status: MatchupStatus
+  home: MatchupSideLineupScoring
+  away: MatchupSideLineupScoring
 }
 
 export type StandingRow = {

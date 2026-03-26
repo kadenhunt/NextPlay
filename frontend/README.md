@@ -1,34 +1,32 @@
-# NextPlay Frontend
+# NextPlay frontend
 
-Quick teammate note from me: this frontend is demo-ready for core flows and set up for backend API swap-in.
+Demo-ready UI for core fantasy flows, with a **single API seam** for backend swap-in.
 
 ## Scripts
 
-- `npm run dev` - start local dev server
-- `npm run build` - production build
-- `npm run lint` - run ESLint
+- `npm run dev` — Vite dev server  
+- `npm run build` — production build (runs `tsc` + Vite)  
+- `npm run lint` — ESLint  
 
-## Demo Draft Controls
+## Mock API and Dev mode
 
-Set `VITE_DEMO_DRAFT_MODE=1` in `.env.local` to expose commissioner demo controls during draft:
+- **API entry:** `src/services/api/nextplayApi.ts`  
+  - Exports **`USES_MOCK_BACKEND`** (`true` until you wire real HTTP clients).  
+  - Re-exports mock implementations from `src/services/mocks/mockNextPlayApi.ts`.
 
-- Skip current pick (auto-pick + mark team auto)
-- Toggle on-clock team auto mode
+- **Dev mode:** use the header toggle. Persists as `localStorage` key **`nextplay.devMode`** (`'1'` on, `'0'` off).  
+  When **on**, you get demo conveniences (state shortcuts, role bypass, synthetic season rows for empty shells). When **off**, the app stays “prototype-shaped” without that extra fill behavior.
 
-You can also toggle in browser devtools with:
+## Scoring UI (product story)
 
-```js
-localStorage.setItem('nextplay.demo.draftMode', '1')
-```
+- **Player:** stat lines with **quantity × rate → fantasy points**; detail fetch includes breakdown.  
+- **Team:** starter table sums to **team score (starters)**; expanded rows match **Matchups** projected side in the mock.  
+- **Matchup details:** `getMatchupLineupScoring` drives home/away columns (same breakdown panels as Team).  
 
-Disable by removing the key or setting it to `'0'`.
+## Backend swap
 
-## Backend Swap Point
+Replace mock exports in `src/services/api/nextplayApi.ts` with your HTTP client; keep types in `src/types/models.ts` aligned (or version them).
 
-When backend APIs are ready, replace mock exports in:
+## Lint / build
 
-- `src/services/api/nextplayApi.ts`
-
-Current source of truth for mock behavior:
-
-- `src/services/mocks/mockNextPlayApi.ts`
+From this directory: `npm run lint`, `npm run build`.

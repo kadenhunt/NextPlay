@@ -18,16 +18,14 @@ export default function FormWrapper({
   onSubmit,
 }: Props) {
   return (
-    <div className="w-full rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-slate-900">
-      {title ? <h1 className="text-xl font-semibold">{title}</h1> : null}
+    <div className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      {title ? <h1 className="text-xl font-semibold text-zinc-100">{title}</h1> : null}
       {description ? (
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-          {description}
-        </p>
+        <p className="mt-1 text-sm text-zinc-400">{description}</p>
       ) : null}
 
       {error ? (
-        <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-200">
+        <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/[0.07] px-3 py-2 text-sm text-red-400">
           {error}
         </div>
       ) : null}
@@ -44,4 +42,3 @@ export default function FormWrapper({
     </div>
   )
 }
-

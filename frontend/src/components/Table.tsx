@@ -25,12 +25,12 @@ export default function Table<T>({
   getRowId,
 }: Props<T>) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+    <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/60">
       <table className="min-w-full border-collapse text-left text-sm">
-        <thead className="border-b border-white/10 bg-white/5 text-xs uppercase tracking-wide text-slate-300">
+        <thead className="border-b border-zinc-800 bg-zinc-900/80 text-[11px] uppercase tracking-wider text-zinc-500">
           <tr>
             {columns.map((c) => (
-              <th key={c.key} className={`px-3 py-2 font-medium ${c.className ?? ''}`}>
+              <th key={c.key} className={`px-3 py-2.5 font-medium ${c.className ?? ''}`}>
                 {c.header}
               </th>
             ))}
@@ -39,19 +39,19 @@ export default function Table<T>({
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-6 text-center text-gray-600 dark:text-gray-400">
+              <td colSpan={columns.length} className="px-3 py-6 text-center text-zinc-500">
                 Loading...
               </td>
             </tr>
           ) : error ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-4 text-center text-red-700 dark:text-red-200">
+              <td colSpan={columns.length} className="px-3 py-4 text-center text-red-400">
                 {error}
               </td>
             </tr>
           ) : rows.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-6 text-center text-gray-600 dark:text-gray-400">
+              <td colSpan={columns.length} className="px-3 py-6 text-center text-zinc-500">
                 {emptyText}
               </td>
             </tr>
@@ -59,7 +59,7 @@ export default function Table<T>({
             rows.map((row) => (
               <tr
                 key={getRowId(row)}
-                className="border-t border-white/5 hover:bg-white/5 transition"
+                className="border-t border-zinc-800/60 transition hover:bg-zinc-800/40"
               >
                 {columns.map((c) => (
                   <td key={c.key} className={`px-3 py-3 align-top ${c.className ?? ''}`}>
@@ -74,4 +74,3 @@ export default function Table<T>({
     </div>
   )
 }
-

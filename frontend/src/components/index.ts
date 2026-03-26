@@ -5,4 +5,6 @@ export { default as Table } from './Table'
 export { default as Modal } from './Modal'
 export { default as StatusBadge } from './StatusBadge'
 export { default as TopTicker } from './TopTicker'
+export { default as DevModeToggle } from './DevModeToggle'
+export { default as ScoringBreakdownPanel } from './ScoringBreakdownPanel'
 

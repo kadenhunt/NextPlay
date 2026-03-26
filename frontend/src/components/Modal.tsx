@@ -8,9 +8,11 @@ type Props = {
   children: ReactNode
   footer?: ReactNode
   onClose: () => void
+  /** e.g. max-w-4xl for wide content */
+  panelClassName?: string
 }
 
-export default function Modal({ open, title, children, footer, onClose }: Props) {
+export default function Modal({ open, title, children, footer, onClose, panelClassName }: Props) {
   useEffect(() => {
     if (!open) return
 
@@ -31,13 +33,15 @@ export default function Modal({ open, title, children, footer, onClose }: Props)
       aria-modal="true"
     >
       <div
-        className="absolute inset-0 bg-black/50"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
         onMouseDown={onClose}
         aria-hidden="true"
       />
 
-      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-5 shadow-lg dark:bg-slate-900">
-        {title ? <h2 className="text-lg font-semibold">{title}</h2> : null}
+      <div
+        className={`relative z-10 w-full rounded-xl border border-zinc-800 bg-zinc-900 p-5 shadow-2xl shadow-black/50 ${panelClassName ?? 'max-w-lg'}`}
+      >
+        {title ? <h2 className="text-lg font-semibold text-zinc-100">{title}</h2> : null}
         <div className="mt-3">{children}</div>
         {footer ? <div className="mt-5">{footer}</div> : null}
       </div>
@@ -45,4 +49,3 @@ export default function Modal({ open, title, children, footer, onClose }: Props)
     document.body,
   )
 }
-
