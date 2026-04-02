@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useMemo, useState } from 'react'
 import type { PropsWithChildren } from 'react'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
@@ -32,17 +32,19 @@ function readUserFromStorage(): AuthUser | null {
 }
 
 export default function AuthProvider({ children }: PropsWithChildren) {
-  const [status, setStatus] = useState<AuthStatus>('loading')
-  const [user, setUser] = useState<AuthUser | null>(null)
-
-  useEffect(() => {
+  const [{ user, status }, setAuth] = useState(() => {
     const stored = readUserFromStorage()
-    if (stored) {
-      setUser(stored)
-      setStatus('authenticated')
-    } else {
-      setStatus('unauthenticated')
+    return {
+      user: stored,
+      status: (stored ? 'authenticated' : 'unauthenticated') as AuthStatus,
     }
+  })
+
+  const setUser = useCallback((next: AuthUser | null) => {
+    setAuth({
+      user: next,
+      status: next ? 'authenticated' : 'unauthenticated',
+    })
   }, [])
 
   const value = useMemo<AuthContextValue>(() => {
@@ -62,7 +64,6 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
         setUser(nextUser)
-        setStatus('authenticated')
       },
       register: async (email: string, password: string, displayName: string) => {
         if (!email.trim() || !password.trim() || !displayName.trim()) {
@@ -76,15 +77,13 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser))
         setUser(nextUser)
-        setStatus('authenticated')
       },
       logout: () => {
         localStorage.removeItem(STORAGE_KEY)
         setUser(null)
-        setStatus('unauthenticated')
       },
     }
-  }, [status, user])
+  }, [status, user, setUser])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

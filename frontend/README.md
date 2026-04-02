@@ -1,6 +1,10 @@
 # NextPlay frontend
 
-Demo-ready UI for core fantasy flows, with a **single API seam** for backend swap-in.
+This is the **main application** in the NextPlay repo: demo-ready UI for core fantasy flows, with a **single API seam** for backend swap-in.
+
+**Parent repo:** Everything about *where* the project lives, *what* it is for, and the **testing/CI starter base** (lint + build today; full tests later) is in **[`../README.md`](../README.md)** — start there if you are new.
+
+**Pattern:** **Adapter** — pages import `src/services/api/nextplayApi.ts` only; mock and (later) HTTP clients are interchangeable adapters. Class talking points and ML roadmap: **`../README.md`**.
 
 ## Scripts
 
@@ -30,3 +34,5 @@ Replace mock exports in `src/services/api/nextplayApi.ts` with your HTTP client;
 ## Lint / build
 
 From this directory: `npm run lint`, `npm run build`.
+
+CI runs the same on GitHub — see **[`../docs/TESTING.md`](../docs/TESTING.md)** and **[`../.github/workflows/ci.yml`](../.github/workflows/ci.yml)**.

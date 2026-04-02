@@ -31,7 +31,6 @@ import {
 import { isAfter, addSeconds } from 'date-fns'
 import { NEXTPLAY_DEV_MODE_STORAGE_KEY } from '@/providers/DevModeProvider'
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const random = Math.random
 
 type DraftStateBase = Omit<DraftState, 'isCurrentUserTurn'>
