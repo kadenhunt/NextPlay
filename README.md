@@ -187,4 +187,20 @@ Insights today (`getPlayerInsights`, `getMatchupInsight`) are **placeholders**. 
 
 ---
 
+## API Documentation and Sites
+
+**Football
+ - All API Fetching: https://api.collegefootballdata.com/
+ - Documentation: https://api.collegefootballdata.com/
+
+**Basketball
+ - All API Fetching: https://api.collegebasketballdata.com/
+ - Documentation: https://api.collegebasketballdata.com/
+
+**Baseball
+ - Live Scores API Fetching: https://sports.core.api.espn.com/v3/sports/baseball/
+ - Live Scores API Documentation: https://github.com/pseudo-r/Public-ESPN-API/blob/main/docs/sports/baseball.md
+ - Players, Teams, etc. API Fetching: https://mlb-college-baseball-api.p.rapidapi.com/
+ - Players, Teams, etc. API Documentation: https://highlightly.net/mlb-api/documentation/
+
 *For day-to-day frontend commands and paths, see `frontend/README.md`. For the testing/CI roadmap and backlog, see `docs/TESTING.md`.*
