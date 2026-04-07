@@ -11,9 +11,24 @@ BEGIN
 END
 GO
 
+CREATE TABLE Sports (
+    sport_id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    sport_name VARCHAR(256)
+);
+GO
+
 CREATE TABLE Users (
     user_id INT IDENTITY(1,1) NOT NULL PRIMARY KEY ,
     username varchar ( 256 ), 
+);
+GO
+
+CREATE TABLE Leagues (
+    league_id INT IDENTITY(1,1) NOT NULL PRIMARY KEY ,
+    sport_id INT,
+    rankings VARCHAR(2048) NOT NULL,
+    game_results VARCHAR(2048) NOT NULL,
+    FOREIGN KEY(sport_id) REFERENCES Sports(sport_id)
 );
 GO
 
@@ -21,18 +36,9 @@ CREATE TABLE User_Teams (
     user_team_id INT IDENTITY(1,1) NOT NULL PRIMARY KEY ,
     user_id INT,
     league_id INT,
-    roster JSON NOT NULL,
+    roster VARCHAR(2048) NOT NULL,
     FOREIGN KEY(user_id) REFERENCES Users(user_id),
     FOREIGN KEY(league_id) REFERENCES Leagues(league_id)
-);
-GO
-
-CREATE TABLE Leagues (
-    league_id INT IDENTITY(1,1) NOT NULL PRIMARY KEY ,
-    sport_id INT,
-    rankings JSON NOT NULL,
-    game_results JSON NOT NULL,
-    FOREIGN KEY(usport_id) REFERENCES Sports(sport_id)
 );
 GO
 
@@ -40,7 +46,7 @@ CREATE TABLE Game_Results (
     game_id INT IDENTITY(1,1) NOT NULL PRIMARY KEY ,
     home_team_id INT,
     away_team_id INT,
-    game_results JSON NOT NULL,
+    game_results VARCHAR(2048) NOT NULL,
 );
 GO
 
@@ -55,14 +61,8 @@ CREATE TABLE Player (
     player_id INT IDENTITY(1,1) NOT NULL PRIMARY KEY ,
     player_name VARCHAR(256),
     sport_id INT,
-    player_stats JSON NOT NULL,
+    player_stats VARCHAR(2048) NOT NULL,
     FOREIGN KEY(sport_id) REFERENCES Sports(sport_id)
-);
-GO
-
-CREATE TABLE Sports (
-    sport_id INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
-    sport_name VARCHAR(256)
 );
 GO
 

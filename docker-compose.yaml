@@ -1,19 +1,19 @@
 
 services:
-  my_db_container: 
+  nextplay_db: 
     image: mcr.microsoft.com/mssql/server:2022-latest
     environment:
       ACCEPT_EULA: "Y"
       MSSQL_SA_PASSWORD: "NextPlay1234"
     ports:
       - "5125:5125"
-    networks:
-      - dev_network
+    # networks:
+    #   - dev_network
     volumes:
       - ./database/init.sql:/db/init.sql
       - ./database/entrypoint.sh:/entrypoint.sh
     entrypoint: ["/bin/bash", "/entrypoint.sh"]
 
-networks:
-  dev_network:
-    driver: bridge
+# networks:
+#   dev_network:
+#     driver: bridge
