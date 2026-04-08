@@ -7,7 +7,7 @@ type Props = {
 
 const stateToStyles: Record<LeagueState, string> = {
   [LeagueStateValues.CREATED]:
-    'bg-zinc-800/80 text-zinc-300 border-zinc-700/60',
+    'border-zinc-300 bg-zinc-200 text-zinc-800 dark:border-zinc-700/60 dark:bg-zinc-800/80 dark:text-zinc-300',
   [LeagueStateValues.DRAFT_SCHEDULED]:
     'bg-amber-500/10 text-amber-400 border-amber-500/20',
   [LeagueStateValues.DRAFT_IN_PROGRESS]:
@@ -17,7 +17,7 @@ const stateToStyles: Record<LeagueState, string> = {
   [LeagueStateValues.PLAYOFFS]:
     'bg-red-500/10 text-red-400 border-red-500/20',
   [LeagueStateValues.COMPLETE]:
-    'bg-zinc-800/60 text-zinc-400 border-zinc-700/40',
+    'border-zinc-300 bg-zinc-200 text-zinc-700 dark:border-zinc-700/40 dark:bg-zinc-800/60 dark:text-zinc-400',
 }
 
 const liveStates = new Set<LeagueState>([

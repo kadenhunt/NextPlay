@@ -2,15 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  /* Surfaces: light = paper cards on zinc-100 shell; dark = existing slate panels */
+  .np-card {
+    @apply rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-900/60 dark:shadow-none;
+  }
+
+  .np-card-inset {
+    @apply rounded-xl border border-zinc-200 bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-950/60;
+  }
+
+  .np-card-muted {
+    @apply rounded-xl border border-zinc-200 bg-zinc-100/90 dark:border-zinc-800 dark:bg-zinc-900/40;
+  }
+
+  .np-inset-sm {
+    @apply rounded-lg border border-zinc-200 bg-zinc-100/90 dark:border-zinc-800 dark:bg-zinc-950/60;
+  }
+
+  .np-inset-xs {
+    @apply rounded-md border border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950/60;
+  }
+}
+
+/* SVG wordmarks reference Toxigenesis; keep family names aligned with exported Illustrator CSS. */
+@font-face {
+  font-family: ToxigenesisRg-Bold;
+  src: url('/fonts/toxigenesis-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: Toxigenesis;
+  src: url('/fonts/toxigenesis-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --sans: 'Inter', system-ui, -apple-system, sans-serif;
   --mono: ui-monospace, 'Cascadia Code', Consolas, monospace;
+  --display: 'ToxigenesisRg-Bold', 'Toxigenesis', var(--sans);
 
   font: 15px/1.5 var(--sans);
   letter-spacing: -0.01em;
-  color-scheme: dark;
-  color: #d4d4d8;
-  background: #09090b;
+  color-scheme: light;
+  color: #18181b;
+  background: #f4f4f5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -19,6 +60,16 @@
   @media (max-width: 1024px) {
     font-size: 14px;
   }
+}
+
+html.dark {
+  color-scheme: dark;
+  color: #e4e4e7;
+  background: #09090b;
+}
+
+html[data-text-scale='110'] {
+  font-size: 110%;
 }
 
 #root {
@@ -37,19 +88,96 @@ body {
   margin: 0;
 }
 
+.sr-only {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  top: auto;
+  overflow: hidden;
+}
+
+.skip-link {
+  position: absolute;
+  top: -80px;
+  left: 1rem;
+  z-index: 60;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(215, 27, 34, 0.45);
+  background: #fff;
+  color: #18181b;
+  font-weight: 600;
+  padding: 0.5rem 0.75rem;
+  transition: top 120ms ease-in-out;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
 h1,
 h2,
 h3 {
   font-family: var(--sans);
   font-weight: 600;
-  color: #fafafa;
+  color: #18181b;
   letter-spacing: -0.02em;
+}
+
+html.dark h1,
+html.dark h2,
+html.dark h3 {
+  color: #fafafa;
 }
 
 h1 { font-size: inherit; margin: 0; }
 h2 { font-size: inherit; margin: 0; }
 h3 { font-size: inherit; margin: 0; }
 p { margin: 0; }
+
+html[data-contrast='high'] body {
+  color: #09090b;
+  background: #fff;
+}
+
+html[data-contrast='high'] a {
+  text-decoration-thickness: 2px;
+}
+
+/* High-contrast mode must be visibly different across Tailwind utility-heavy screens. */
+html[data-contrast='high'] [class*='border-zinc-'] {
+  border-color: #000 !important;
+}
+
+html[data-contrast='high'] [class*='bg-zinc-9'] {
+  background-color: #000 !important;
+}
+
+html[data-contrast='high'] [class*='bg-zinc-8'] {
+  background-color: #111 !important;
+}
+
+html[data-contrast='high'] [class*='bg-white'] {
+  background-color: #fff !important;
+}
+
+html[data-contrast='high'] [class*='bg-zinc-9'] [class*='text-zinc-'],
+html[data-contrast='high'] [class*='bg-zinc-8'] [class*='text-zinc-'] {
+  color: #fff !important;
+}
+
+html[data-contrast='high'] [class*='text-zinc-5'],
+html[data-contrast='high'] [class*='text-zinc-6'],
+html[data-contrast='high'] [class*='text-zinc-7'],
+html[data-contrast='high'] [class*='text-zinc-8'],
+html[data-contrast='high'] [class*='text-zinc-9'] {
+  color: #111 !important;
+}
+
+html[data-contrast='high'] *:focus-visible {
+  outline: 3px solid #000 !important;
+  outline-offset: 2px;
+}
 
 code,
 .counter {
@@ -88,13 +216,62 @@ code {
   animation-play-state: paused;
 }
 
+/* Sheen stays inside the card so skew/transform does not flash a horizontal scrollbar. */
+.sporty-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.sporty-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-115%) skewX(-20deg);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.04) 45%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.04) 55%,
+    transparent 100%
+  );
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.sporty-card:hover::after {
+  animation: sporty-sweep 700ms ease-out;
+}
+
+/* Lighter sheen on light-mode cards */
+html:not(.dark) .sporty-card::after {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(0, 0, 0, 0.04) 45%,
+    rgba(0, 0, 0, 0.09) 50%,
+    rgba(0, 0, 0, 0.04) 55%,
+    transparent 100%
+  );
+}
+
 select {
-  color: #e4e4e7;
+  color: #18181b;
 }
 
 select option {
-  color: #e4e4e7;
-  background-color: #18181b;
+  color: #18181b;
+  background-color: #fff;
+}
+
+html.dark select {
+  color: #fafafa;
+}
+
+html.dark select option {
+  color: #18181b;
+  background-color: #fff;
 }
 
 @keyframes ticker-scroll {
@@ -107,8 +284,71 @@ select option {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes sporty-sweep {
+  to {
+    transform: translateX(115%) skewX(-20deg);
+  }
+}
+
+@keyframes theme-ball-bounce {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  22% {
+    transform: translateY(-28%) scale(1.1);
+  }
+  45% {
+    transform: translateY(0) scale(0.94);
+  }
+  68% {
+    transform: translateY(-12%) scale(1.04);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.theme-ball-bounce {
+  animation: theme-ball-bounce 0.52s cubic-bezier(0.34, 1.45, 0.64, 1) both;
+}
+
 .animate-fade-up {
   animation: fade-up 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-up {
+    animation: none;
+  }
+
+  .ticker-track {
+    animation: none;
+  }
+
+  .animate-ping {
+    animation: none;
+  }
+
+  .sporty-card:hover::after {
+    animation: none;
+  }
+}
+
+html[data-motion='reduce'] .animate-fade-up,
+html[data-motion='reduce'] .ticker-track,
+html[data-motion='reduce'] .animate-ping,
+html[data-motion='reduce'] .sporty-card:hover::after {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-ball-bounce {
+    animation: none;
+  }
+}
+
+html[data-motion='reduce'] .theme-ball-bounce {
+  animation: none !important;
 }
 
 ::selection {

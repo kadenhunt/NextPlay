@@ -1,15 +1,19 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useNavigate, useParams } from 'react-router-dom'
 import Button from '@/components/Button'
 import { useAuth } from '@/providers/AuthProvider'
 import { useDevMode } from '@/providers/DevModeProvider'
 import StatusBadge from '@/components/StatusBadge'
 import { useLeague } from '@/providers/LeagueProvider'
+import Modal from '@/components/Modal'
 import {
   commissionerPauseDraft,
   commissionerSetLeagueState,
   commissionerStartDraft,
   devForceLeagueState,
+  getTopTickerItems,
+  getLeagueMemberSpotlight,
 } from '@/services/api/nextplayApi'
 import type { LeagueState } from '@/types/models'
 import { LeagueState as LeagueStateValues } from '@/types/models'
@@ -24,11 +28,28 @@ const DEV_JUMP_STATES: { state: LeagueState; label: string }[] = [
 ]
 
 export default function LeagueHomePage() {
+  const { id: leagueId } = useParams()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { user } = useAuth()
   const { status, league, error, userRole } = useLeague()
   const { devMode } = useDevMode()
   const userId = user?.id ?? ''
+  const [weeklyBriefOpen, setWeeklyBriefOpen] = useState(false)
+
+  const memberSpotlightQuery = useQuery({
+    queryKey: ['leagueMemberSpotlight', leagueId, userId],
+    queryFn: () => getLeagueMemberSpotlight(leagueId!, userId),
+    enabled: Boolean(leagueId && userId && status === 'ready'),
+  })
+
+  const weeklyFeedQuery = useQuery({
+    queryKey: ['leagueWeeklyBrief', leagueId, userId],
+    queryFn: () => getTopTickerItems(userId),
+    enabled: Boolean(leagueId && userId),
+    staleTime: 30 * 60 * 1000,
+    refetchInterval: 30 * 60 * 1000,
+  })
 
   const invalidateAll = async () => {
     if (!league) return
@@ -94,7 +115,7 @@ export default function LeagueHomePage() {
 
   if (status === 'loading') {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-400">
+      <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
         Loading league details...
       </div>
     )
@@ -110,7 +131,7 @@ export default function LeagueHomePage() {
 
   if (!league) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 text-sm text-zinc-400">
+      <div className="np-card p-4 text-sm text-zinc-600 dark:text-zinc-400">
         League not found.
       </div>
     )
@@ -126,83 +147,114 @@ export default function LeagueHomePage() {
   ]
 
   const visibleActions = stateActions.filter((a) => a.when.includes(league.state))
+  const weekLabel = useMemo(() => {
+    const now = new Date()
+    const monday = new Date(now)
+    const day = monday.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    monday.setDate(monday.getDate() + diff)
+    return `Week of ${monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+  }, [])
+  const briefItems = useMemo(() => {
+    const myItems = (weeklyFeedQuery.data ?? []).filter((i) =>
+      i.label.includes(league.name),
+    )
+    if (myItems.length > 0) return myItems.slice(0, 4).map((i) => i.label)
+    const fallback = [
+      `${league.name}: current state is ${league.state.replaceAll('_', ' ').toLowerCase()}.`,
+      `${league.members.length} member${league.members.length === 1 ? '' : 's'} active in this league.`,
+    ]
+    const spotlight = memberSpotlightQuery.data?.slice(0, 2).map((m) => {
+      const rec = m.wins != null && m.losses != null ? ` (${m.wins}-${m.losses})` : ''
+      return `${m.displayName}: ${m.teamName ?? 'No team'}${rec}`
+    }) ?? []
+    return [...fallback, ...spotlight].slice(0, 4)
+  }, [weeklyFeedQuery.data, league.name, league.state, league.members.length, memberSpotlightQuery.data])
 
   return (
     <div className="space-y-5">
       {/* Overview card */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-zinc-100">League Overview</h2>
-            <p className="mt-1 text-sm text-zinc-400">
-              Sport: <span className="font-medium text-zinc-200 capitalize">{league.sport}</span> &middot; Invite:{' '}
-              <span className="font-mono text-zinc-300">{league.inviteCode}</span>
+            <h2 className="font-display text-lg font-semibold tracking-wide text-zinc-900 dark:text-zinc-100">League Overview</h2>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              Sport: <span className="font-medium text-zinc-800 dark:text-zinc-200 capitalize">{league.sport}</span> &middot; Invite:{' '}
+              <span className="font-mono text-zinc-700 dark:text-zinc-300">{league.inviteCode}</span>
             </p>
           </div>
           <StatusBadge state={league.state} />
         </div>
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">Weekly Brief</div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400">{weekLabel}</p>
+          </div>
+          <Button variant="secondary" onClick={() => setWeeklyBriefOpen(true)}>
+            Open Brief
+          </Button>
+        </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <div className="rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-4 py-3">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Members</div>
-            <div className="mt-1 text-2xl font-bold tabular-nums text-zinc-100">{league.members.length}</div>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Members</div>
+            <div className="mt-1 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{league.members.length}</div>
           </div>
           <div className="rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-4 py-3">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Your Role</div>
-            <div className="mt-1 text-lg font-semibold text-zinc-100">{roleLabel(userRole ?? 'MEMBER')}</div>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Your Role</div>
+            <div className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{roleLabel(userRole ?? 'MEMBER')}</div>
           </div>
           <div className="rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-4 py-3">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">State</div>
-            <div className="mt-1 text-sm font-semibold text-zinc-200">{league.state.replaceAll('_', ' ')}</div>
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">State</div>
+            <div className="mt-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{league.state.replaceAll('_', ' ')}</div>
           </div>
         </div>
       </div>
 
-      {/* Navigation + Quick Actions */}
-      <div className="grid gap-4 lg:grid-cols-3">
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 lg:col-span-2">
-          <h3 className="text-base font-semibold text-zinc-100">Navigate</h3>
-          <p className="mt-1 text-sm text-zinc-400">
-            Jump to any section in this league.
+      <Modal
+        open={weeklyBriefOpen}
+        title={`Weekly Brief · ${league.name}`}
+        onClose={() => setWeeklyBriefOpen(false)}
+        footer={
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button variant="secondary" onClick={() => setWeeklyBriefOpen(false)}>
+              Close
+            </Button>
+            <Button variant="primary" onClick={() => navigate('/notifications')}>
+              View Notification Center
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
+          <p className="text-xs text-zinc-500 dark:text-zinc-500">
+            Last updated:{' '}
+            {weeklyFeedQuery.dataUpdatedAt
+              ? new Date(weeklyFeedQuery.dataUpdatedAt).toLocaleString()
+              : 'Loading...'}
           </p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link to="draft"><Button variant="secondary">Draft</Button></Link>
-            <Link to="team"><Button variant="secondary">My Team</Button></Link>
-            <Link to="players"><Button variant="secondary">Players</Button></Link>
-            <Link to="matchups"><Button variant="secondary">Matchups</Button></Link>
-            <Link to="standings"><Button variant="secondary">Standings</Button></Link>
-            <Link to="playoffs"><Button variant="secondary">Playoffs</Button></Link>
-            <Link to="chat"><Button variant="secondary">Chat</Button></Link>
-            {(userRole === 'COMMISSIONER' || devMode) && (
-              <Link to="settings"><Button variant="secondary">Settings</Button></Link>
-            )}
-          </div>
+          <ul className="space-y-2">
+            {briefItems.map((line, idx) => (
+              <li key={`${line}-${idx}`} className="flex items-start gap-2 rounded-md border border-zinc-800/60 bg-zinc-950/40 px-3 py-2">
+                <span aria-hidden="true" className="mt-[7px] inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
+                <span>{line}</span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-          <h3 className="text-base font-semibold text-zinc-100">Quick Actions</h3>
-          <div className="mt-3 space-y-2">
-            <Link to="draft" className="block rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-900/80 hover:text-zinc-200">
-              Open Draft Room
-            </Link>
-            <Link to="standings" className="block rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-900/80 hover:text-zinc-200">
-              View Standings
-            </Link>
-            <Link to="matchups" className="block rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-3 py-2 text-xs text-zinc-400 transition hover:border-zinc-700 hover:bg-zinc-900/80 hover:text-zinc-200">
-              View Matchups
-            </Link>
-          </div>
-        </div>
-      </div>
+      </Modal>
 
       {/* State Transition Controls */}
       {showControls && (
-        <div className={`rounded-xl border p-5 ${devMode ? 'border-red-500/20 bg-red-500/[0.03]' : 'border-zinc-800 bg-zinc-900/60'}`}>
+        <div
+          className={`rounded-xl border p-5 ${devMode ? 'border-red-500/20 bg-red-500/[0.03]' : 'np-card'}`}
+        >
           <div className="flex items-center gap-2">
             {devMode && <span className="text-[11px] font-bold uppercase tracking-wider text-red-400/80">Dev</span>}
-            <h3 className="text-base font-semibold text-zinc-100">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
               {devMode ? 'State Controls' : 'Commissioner Controls'}
             </h3>
           </div>
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
             {devMode
               ? 'Advance the league through any state for demo purposes.'
               : 'Manage league state transitions.'}
@@ -221,7 +273,7 @@ export default function LeagueHomePage() {
               ))}
             </div>
           ) : (
-            <div className="mt-3 text-sm text-zinc-500">
+            <div className="mt-3 text-sm text-zinc-500 dark:text-zinc-500">
               No transitions available from the current state.
             </div>
           )}
@@ -234,7 +286,7 @@ export default function LeagueHomePage() {
           {devMode && (
             <div className="mt-5 border-t border-red-500/15 pt-4">
               <p className="text-xs font-semibold uppercase tracking-wider text-red-400/70">Jump to state</p>
-              <p className="mt-1 text-xs text-zinc-500">
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
                 Rewind or skip ahead without clearing your browser. For a full fresh seed, use Reset demo data on the dashboard.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -264,25 +316,52 @@ export default function LeagueHomePage() {
       )}
 
       {/* Members */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-zinc-100">Members</h3>
-          <span className="text-xs tabular-nums text-zinc-500">{league.members.length}</span>
+          <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Members</h3>
+          <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-500">{league.members.length}</span>
         </div>
         <div className="mt-3 space-y-1.5">
-          {league.members.map((m) => (
-            <div key={m.userId} className="flex items-center justify-between gap-3 rounded-lg border border-zinc-800/40 bg-zinc-950/40 px-3 py-2 transition hover:border-zinc-700/60">
-              <div className="flex items-center gap-2">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-bold uppercase text-zinc-400">
-                  {m.displayName.charAt(0)}
+          {league.members.map((m) => {
+            const spot = memberSpotlightQuery.data?.find((s) => s.userId === m.userId)
+            let teamLine = '—'
+            if (spot?.teamName) {
+              const parts = [spot.teamName]
+              if (spot.wins != null && spot.losses != null) {
+                parts.push(`${spot.wins}-${spot.losses}`)
+              }
+              if (spot.rank != null) {
+                parts.push(`#${spot.rank}`)
+              }
+              teamLine = parts.join(' · ')
+            } else if (league.state === 'CREATED' || league.state === 'DRAFT_SCHEDULED') {
+              teamLine = 'Pre-season'
+            }
+
+            return (
+              <div
+                key={m.userId}
+                className="flex flex-col gap-1 rounded-lg border border-zinc-800/40 bg-zinc-950/40 px-3 py-2 transition hover:border-zinc-700/60 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-bold uppercase text-zinc-600 dark:text-zinc-400">
+                    {m.displayName.charAt(0)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">{m.displayName}</div>
+                    <div className="truncate text-xs text-zinc-500 dark:text-zinc-500">{teamLine}</div>
+                  </div>
                 </div>
-                <div className="text-sm font-medium text-zinc-200">{m.displayName}</div>
+                <div
+                  className={`shrink-0 text-xs sm:text-right ${m.role === 'COMMISSIONER' ? 'text-red-400/80' : 'text-zinc-500 dark:text-zinc-500'}`}
+                >
+                  {roleLabel(m.role)}
+                </div>
               </div>
-              <div className={`text-xs ${m.role === 'COMMISSIONER' ? 'text-red-400/80' : 'text-zinc-500'}`}>{roleLabel(m.role)}</div>
-            </div>
-          ))}
+            )
+          })}
           {league.members.length === 0 && (
-            <div className="text-sm text-zinc-400">No members yet.</div>
+            <div className="text-sm text-zinc-600 dark:text-zinc-400">No members yet.</div>
           )}
         </div>
       </div>

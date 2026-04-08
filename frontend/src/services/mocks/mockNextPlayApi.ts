@@ -1,3 +1,7 @@
+/**
+ * In-browser mock for every export of services/api/nextplayApi.ts.
+ * Swap the re-export in nextplayApi.ts when the real backend is ready.
+ */
 import type {
   ChatMessage,
   DraftPick,
@@ -6,6 +10,7 @@ import type {
   League,
   LeagueId,
   LeagueMember,
+  LeagueMemberSpotlight,
   LeagueState,
   Player,
   PlayerId,
@@ -835,6 +840,36 @@ export async function getLeagueById(
     members: rec.members,
     role: member.role,
   }
+}
+
+export async function getLeagueMemberSpotlight(
+  leagueId: LeagueId,
+  userId: UserId,
+): Promise<LeagueMemberSpotlight[]> {
+  await delay(180)
+  maybeThrowError()
+
+  const rec = db.leaguesById[leagueId]
+  if (!rec) throw new Error('League not found')
+
+  const gate = rec.members.find((m) => m.userId === userId)
+  if (!gate) throw new Error('Not authorized')
+
+  const standingByTeam = new Map(rec.standings.map((s) => [s.teamId, s]))
+
+  return rec.members.map((m) => {
+    const team = rec.teams.find((t) => t.ownerUserId === m.userId) ?? null
+    const st = team ? standingByTeam.get(team.id) : undefined
+    return {
+      userId: m.userId,
+      displayName: m.displayName,
+      role: m.role,
+      teamName: team?.name ?? null,
+      wins: st !== undefined ? st.wins : null,
+      losses: st !== undefined ? st.losses : null,
+      rank: st !== undefined ? st.rank : null,
+    }
+  })
 }
 
 export type CreateLeagueInput = {

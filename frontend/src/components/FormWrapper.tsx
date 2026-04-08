@@ -18,26 +18,22 @@ export default function FormWrapper({
   onSubmit,
 }: Props) {
   return (
-    <div className="w-full rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-      {title ? <h1 className="text-xl font-semibold text-zinc-100">{title}</h1> : null}
+    <div className="w-full np-card p-5">
+      {title ? <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">{title}</h1> : null}
       {description ? (
-        <p className="mt-1 text-sm text-zinc-400">{description}</p>
+        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">{description}</p>
       ) : null}
 
       {error ? (
-        <div className="mt-3 rounded-lg border border-red-500/20 bg-red-500/[0.07] px-3 py-2 text-sm text-red-400">
+        <div role="alert" className="mt-3 rounded-lg border border-red-500/20 bg-red-500/[0.07] px-3 py-2 text-sm text-red-400">
           {error}
         </div>
       ) : null}
 
-      <form
-        className="mt-4 space-y-4"
-        onSubmit={(e) => {
-          void onSubmit?.(e)
-        }}
-      >
-        {isLoading ? <fieldset disabled className="contents" /> : null}
-        {children}
+      <form className="mt-4" onSubmit={(e) => void onSubmit?.(e)}>
+        <fieldset disabled={isLoading} className="space-y-4">
+          {children}
+        </fieldset>
       </form>
     </div>
   )

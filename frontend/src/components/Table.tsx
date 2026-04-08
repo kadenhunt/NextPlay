@@ -25,9 +25,9 @@ export default function Table<T>({
   getRowId,
 }: Props<T>) {
   return (
-    <div className="overflow-x-auto rounded-xl border border-zinc-800 bg-zinc-900/60">
+    <div className="overflow-x-auto np-card">
       <table className="min-w-full border-collapse text-left text-sm">
-        <thead className="border-b border-zinc-800 bg-zinc-900/80 text-[11px] uppercase tracking-wider text-zinc-500">
+        <thead className="border-b border-zinc-200 bg-zinc-100/90 text-[11px] uppercase tracking-wider text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/80">
           <tr>
             {columns.map((c) => (
               <th key={c.key} className={`px-3 py-2.5 font-medium ${c.className ?? ''}`}>
@@ -39,7 +39,10 @@ export default function Table<T>({
         <tbody>
           {isLoading ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-6 text-center text-zinc-500">
+              <td
+                colSpan={columns.length}
+                className="px-3 py-6 text-center text-zinc-500 dark:text-zinc-500"
+              >
                 Loading...
               </td>
             </tr>
@@ -51,7 +54,10 @@ export default function Table<T>({
             </tr>
           ) : rows.length === 0 ? (
             <tr>
-              <td colSpan={columns.length} className="px-3 py-6 text-center text-zinc-500">
+              <td
+                colSpan={columns.length}
+                className="px-3 py-6 text-center text-zinc-500 dark:text-zinc-500"
+              >
                 {emptyText}
               </td>
             </tr>
@@ -59,7 +65,7 @@ export default function Table<T>({
             rows.map((row) => (
               <tr
                 key={getRowId(row)}
-                className="border-t border-zinc-800/60 transition hover:bg-zinc-800/40"
+                className="border-t border-zinc-200 transition hover:bg-zinc-100/80 dark:border-zinc-800/60 dark:hover:bg-zinc-800/40"
               >
                 {columns.map((c) => (
                   <td key={c.key} className={`px-3 py-3 align-top ${c.className ?? ''}`}>

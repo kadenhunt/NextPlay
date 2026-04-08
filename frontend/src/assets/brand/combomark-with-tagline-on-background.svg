@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 794.75 254.72">
+  <defs>
+    <style>
+      .cls-1 {
+        font-family: ToxigenesisRg-Bold, Toxigenesis;
+        font-size: 114.69px;
+        font-weight: 700;
+      }
+
+      .cls-2 {
+        fill: #fff;
+        font-family: Inter, system-ui, sans-serif;
+        font-size: 36px;
+        font-weight: 800;
+      }
+
+      .cls-3 {
+        letter-spacing: 0em;
+      }
+
+      .cls-4 {
+        letter-spacing: 0em;
+      }
+
+      .cls-4, .cls-5, .cls-6 {
+        fill: #f3f1f2;
+      }
+
+      .cls-5 {
+        letter-spacing: -.02em;
+      }
+
+      .cls-7 {
+        letter-spacing: -.04em;
+      }
+
+      .cls-7, .cls-8 {
+        fill: #d71b22;
+      }
+
+      .cls-9 {
+        letter-spacing: -.06em;
+      }
+
+      .cls-10 {
+        letter-spacing: -.02em;
+      }
+
+      .cls-11 {
+        letter-spacing: -.04em;
+      }
+    </style>
+  </defs>
+  <g id="Layer_1-2" data-name="Layer 1">
+    <g>
+      <rect width="786.33" height="251.01"/>
+      <g>
+        <g>
+          <path class="cls-6" d="M147.99,143.98l.49.83,10.67-14.73,27.62-38.09.51-.4-.65,2.27-7.86,27.64-12.84,45.46-9.08,31.92c-.19.66-1.49,1.12-2.15,1.12l-19.58-.06c-1.73,0-2.18-.96-2.83-2.19l-10.71-20.2-18.78-35.19-19.37-35.72-9.62-17.68-10.27,35.1-14.66,50.49-14.82,11.51-14.53,11.47-18.55,14.66,2.99-12.13,14.76-57.05,17.48-67.64,9.69-37.56c.54-2.08,1.41-2.67,3.44-2.67h33.66c2.08,0,4.01.84,5.22,2.64,2.5,3.72,4.61,7.59,6.87,11.62l43.27,77.28,9.61,17.31Z"/>
+          <polygon class="cls-8" points="187.28 91.58 186.77 91.98 159.15 130.07 148.48 144.8 147.99 143.98 145 125.92 142.73 113.3 156.87 65.51 161.13 50.82 139.11 50.65 213.03 2.52 209.16 15.96 188.07 88.26 187.28 91.58"/>
+        </g>
+        <text class="cls-1" transform="translate(199.7 157.15) scale(.99) skewX(-9.83)"><tspan class="cls-6" x="0" y="0">N</tspan><tspan class="cls-5" x="104.59" y="0">e</tspan><tspan class="cls-4" x="175.81" y="0">xt</tspan><tspan class="cls-8" x="305.17" y="0">Pl</tspan><tspan class="cls-7" x="435.8" y="0">a</tspan><tspan class="cls-8" x="505.99" y="0">y</tspan></text>
+      </g>
+      <text/>
+      <text class="cls-2" transform="translate(3.76 242.33)"><tspan x="0" y="0">D</tspan><tspan class="cls-10" x="25.93" y="0">r</tspan><tspan x="40.69" y="0">a</tspan><tspan class="cls-11" x="62.07" y="0">f</tspan><tspan x="75.67" y="0">t</tspan><tspan class="cls-9" x="90.19" y="0">.</tspan><tspan x="100.72" y="0" xml:space="preserve"> Compe</tspan><tspan class="cls-3" x="235.41" y="0">t</tspan><tspan x="249.61" y="0">e</tspan><tspan class="cls-9" x="271.25" y="0">.</tspan><tspan x="281.78" y="0" xml:space="preserve"> Domina</tspan><tspan class="cls-3" x="425.92" y="0">t</tspan><tspan x="440.12" y="0">e</tspan></text>
+    </g>
+  </g>
+</svg>

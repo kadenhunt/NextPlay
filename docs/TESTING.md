@@ -1,8 +1,26 @@
 # Testing & CI plan (NextPlay)
 
-**Purpose of this doc:** The team **started** testing and automation here — it is a **base to build on**, not a finished QA program. CI already runs **lint + build**; everything else below is **planned** so Hudson (database), frontend folks, and future backend work can pick up tasks without redoing the roadmap.
+**Purpose of this doc:** The team started testing and automation here. It is a base to build on, not a finished QA program. CI already runs **lint + build**. Everything else below is **planned** so database, frontend, and future backend work can pick up tasks without redoing the roadmap.
 
-This matches the root **README**: frontend today, mock adapter, SQL under `database/`, real backend/ML later. Use it to split work and grow **GitHub Actions** toward full **CI/CD** when you are ready.
+This matches the root **README**: frontend today, mock adapter, SQL under `database/`, real backend and ML later. Use it to split work and grow **GitHub Actions** toward full **CI/CD** when you are ready.
+
+---
+
+## Kinds of tests we might add (plain names)
+
+| Kind | What it means | Example in this project |
+|------|----------------|-------------------------|
+| **Lint** | Style and common bug patterns in code | ESLint on every PR today |
+| **Build / typecheck** | TypeScript compiles, Vite build succeeds | `npm run build` on every PR today |
+| **Unit** | One function or small module in isolation | League gate helpers in `utils`, scoring math if pulled out of the mock |
+| **Component** | A React piece with fake props or context | A form or button with Testing Library |
+| **Integration (frontend)** | A few pieces together, still no real browser | Query hook plus mock API |
+| **E2E** | Real browser clicks a path like a user | Playwright: login to dashboard, open a league |
+| **API / contract** | HTTP responses match agreed JSON | After backend exists: OpenAPI or fixed fixtures |
+| **Accessibility** | Keyboard, contrast, screen reader basics | Manual checklist, later optional axe in CI |
+| **Database** | Migrations apply on empty DB | Docker one-shot when server work lands |
+
+Right now only the first two run in CI. The table is the menu for later phases below.
 
 ---
 
@@ -14,7 +32,7 @@ This matches the root **README**: frontend today, mock adapter, SQL under `datab
 | **ESLint** | `npm run lint` | Every PR via CI |
 | **Manual** | Click-through demo, Dev mode, Reset data | Before presentations |
 
-There is **no `npm run test` yet** — that’s intentional until someone adds a test runner (see Phase 1).
+There is **no `npm run test` yet**. That is intentional until someone adds a test runner (see Phase 1).
 
 **CI today:** `.github/workflows/ci.yml` runs **lint + build** on `frontend/` for pushes and PRs to `main`.
 
@@ -39,7 +57,7 @@ There is **no `npm run test` yet** — that’s intentional until someone adds a
 2. Add `npm run test` and `npm run test:ci` (Vitest run once, no watch).
 3. First targets (high value, low drama):
    - **Pure functions** in `frontend/src/utils/**` (e.g. league gates, formatters).
-   - **Mock API helpers** — deterministic functions in `mockNextPlayApi.ts` if you extract any (e.g. scoring math) into testable modules.
+   - **Mock API helpers:** deterministic functions in `mockNextPlayApi.ts` if you extract any (for example scoring math) into testable modules.
 4. **Adapter contract smoke:** one test that imports `nextplayApi` and asserts a function exists (guards accidental export breaks).
 
 **CI:** Add a job step after lint: `npm run test:ci` (only after the script exists).
@@ -48,7 +66,7 @@ There is **no `npm run test` yet** — that’s intentional until someone adds a
 
 ## Phase 2 — End-to-end (E2E) smoke
 
-**Tools:** **Playwright** or **Cypress** — pick one for the team.
+**Tools:** **Playwright** or **Cypress.** Pick one for the team.
 
 **Minimal suite:**
 
@@ -76,7 +94,7 @@ Align with **Hudson’s `database/`** work and any future API:
 
 ## Phase 4 — ML / analytics (optional, later)
 
-When `ml/` grows (see README **ML & predictions roadmap**):
+When `ml/` grows (see root **README** repo layout):
 
 - **Unit tests** for feature builders (`features.py`).
 - **Regression tests** on a tiny frozen CSV (expected MAE within tolerance).

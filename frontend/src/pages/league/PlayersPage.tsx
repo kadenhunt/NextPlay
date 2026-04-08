@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthProvider'
@@ -35,10 +35,13 @@ export default function PlayersPage() {
   const [status, setStatus] = useState<PlayerStatus | 'any'>('any')
   const [drafted, setDrafted] = useState<PlayerQuery['drafted']>('available')
   const [sort, setSort] = useState<PlayerQuery['sort']>('projectedPoints_desc')
+  const [savedFilterName, setSavedFilterName] = useState('')
+  const [savedFilters, setSavedFilters] = useState<Array<{ name: string; query: PlayerQuery; updatedAt: string }>>([])
 
   const [selectedPlayerId, setSelectedPlayerId] = useState<PlayerId | null>(null)
   const [detailOpen, setDetailOpen] = useState(false)
   const [pickupBanner, setPickupBanner] = useState<string | null>(null)
+  const filtersStorageKey = `nextplay.players.filters.${leagueId}.${userId ?? 'anon'}`
 
   const query: PlayerQuery = useMemo(
     () => ({
@@ -51,6 +54,24 @@ export default function PlayersPage() {
     }),
     [drafted, position, search, sort, status, team],
   )
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(filtersStorageKey)
+      if (!raw) return
+      setSavedFilters(JSON.parse(raw) as Array<{ name: string; query: PlayerQuery; updatedAt: string }>)
+    } catch {
+      /* noop */
+    }
+  }, [filtersStorageKey])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(filtersStorageKey, JSON.stringify(savedFilters))
+    } catch {
+      /* noop */
+    }
+  }, [filtersStorageKey, savedFilters])
 
   const facetsQuery = useQuery({
     queryKey: ['playerFacets', leagueId, userId],
@@ -123,43 +144,97 @@ export default function PlayersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Players</h2>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
               {league ? <StatusBadge state={league.state} /> : null}
               <span>Browse and filter your player pool.</span>
             </div>
           </div>
 
-          <div className="text-xs text-zinc-500">
+          <div className="text-xs text-zinc-500 dark:text-zinc-500">
             Showing: <span className="font-mono">{drafted}</span>
           </div>
         </div>
         {pickupBanner ? <p className="mt-2 text-sm text-emerald-400">{pickupBanner}</p> : null}
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+          Last updated:{' '}
+          {playersQuery.dataUpdatedAt
+            ? new Date(playersQuery.dataUpdatedAt).toLocaleString()
+            : 'Loading...'}
+        </p>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
         {topInsightPlayers.map((p) => {
           const insight = insightByPlayerId.get(p.id)
           return (
-            <div key={p.id} className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
-              <div className="text-sm font-semibold text-zinc-100">{p.name}</div>
-              <div className="mt-1 text-xs text-zinc-500">{p.team} • {p.position}</div>
+            <div key={p.id} className="np-card p-4">
+              <div className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{p.name}</div>
+              <div className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">{p.team} • {p.position}</div>
               <div className="mt-2 text-xs">
                 <span className={insight?.trend === 'up' ? 'text-emerald-400' : 'text-red-400'}>
                   Trend: {insight?.trend === 'up' ? 'Up' : 'Down'}
                 </span>
               </div>
-              <div className="mt-1 text-xs text-zinc-400">Confidence: {insight?.confidence ?? '—'}</div>
-              <div className="mt-1 text-xs text-zinc-400">Volatility: {insight?.volatility ?? '—'}</div>
+              <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Confidence: {insight?.confidence ?? '—'}</div>
+              <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Volatility: {insight?.volatility ?? '—'}</div>
             </div>
           )
         })}
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
+        <div className="mb-4 rounded-lg border border-zinc-800/70 bg-zinc-950/40 p-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <Input
+              label="Saved filter name"
+              value={savedFilterName}
+              onChange={(e) => setSavedFilterName(e.target.value)}
+              placeholder="e.g., Healthy WR sleepers"
+              className="max-w-xs"
+            />
+            <Button
+              variant="secondary"
+              onClick={() => {
+                if (!savedFilterName.trim()) return
+                const entry = {
+                  name: savedFilterName.trim(),
+                  query,
+                  updatedAt: new Date().toISOString(),
+                }
+                setSavedFilters((prev) => [entry, ...prev.filter((f) => f.name !== entry.name)].slice(0, 8))
+                setSavedFilterName('')
+              }}
+            >
+              Save filter
+            </Button>
+          </div>
+          {savedFilters.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {savedFilters.map((f) => (
+                <button
+                  key={f.name}
+                  type="button"
+                  onClick={() => {
+                    setSearch(f.query.search ?? '')
+                    setPosition(f.query.position ?? '')
+                    setTeam(f.query.team ?? '')
+                    setStatus((f.query.status as PlayerStatus | undefined) ?? 'any')
+                    setDrafted(f.query.drafted ?? 'available')
+                    setSort(f.query.sort ?? 'projectedPoints_desc')
+                  }}
+                  className="rounded-md border border-zinc-700/60 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:border-zinc-600"
+                  title={`Saved ${new Date(f.updatedAt).toLocaleString()}`}
+                >
+                  {f.name}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <div className="grid gap-3 sm:grid-cols-3">
           <Input
             label="Search"
@@ -259,7 +334,7 @@ export default function PlayersPage() {
       </div>
 
       {playersQuery.isLoading ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-400">
+        <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
           Loading players…
         </div>
       ) : playersQuery.isError ? (
@@ -275,7 +350,7 @@ export default function PlayersPage() {
               render: (p: Player) => (
                 <div className="space-y-0.5">
                   <div className="font-medium">{p.name}</div>
-                  <div className="text-xs text-zinc-500">
+                  <div className="text-xs text-zinc-500 dark:text-zinc-500">
                     {p.team} • {p.position}
                   </div>
                 </div>
@@ -285,7 +360,7 @@ export default function PlayersPage() {
               key: 'status',
               header: 'Status',
               render: (p: Player) => (
-                <span className="text-xs text-zinc-400">{p.status}</span>
+                <span className="text-xs text-zinc-600 dark:text-zinc-400">{p.status}</span>
               ),
             },
             {
@@ -348,7 +423,7 @@ export default function PlayersPage() {
               <div className="text-base font-semibold">
                 {(playerDetailQuery.data ?? selectedPlayer).name}
               </div>
-              <div className="text-sm text-zinc-400">
+              <div className="text-sm text-zinc-600 dark:text-zinc-400">
                 {(playerDetailQuery.data ?? selectedPlayer).team} •{' '}
                 {(playerDetailQuery.data ?? selectedPlayer).position}
               </div>
@@ -375,13 +450,13 @@ export default function PlayersPage() {
             </div>
 
             {playerDetailQuery.isLoading ? (
-              <div className="text-xs text-zinc-500">Loading scoring breakdown…</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-500">Loading scoring breakdown…</div>
             ) : playerDetailQuery.data?.scoringBreakdown ? (
               <ScoringBreakdownPanel breakdown={playerDetailQuery.data.scoringBreakdown} />
             ) : null}
           </div>
         ) : (
-          <div className="text-sm text-zinc-400">
+          <div className="text-sm text-zinc-600 dark:text-zinc-400">
             Player not available.
           </div>
         )}

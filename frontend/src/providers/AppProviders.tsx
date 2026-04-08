@@ -1,8 +1,11 @@
+/** Global React context: query client, theme, a11y prefs, dev mode, auth. Wraps the whole app in main.tsx. */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { PropsWithChildren } from 'react'
 import { useState } from 'react'
 import AuthProvider from './AuthProvider'
 import DevModeProvider from './DevModeProvider'
+import AccessibilityProvider from './AccessibilityProvider'
+import ThemeProvider from './ThemeProvider'
 
 export default function AppProviders({ children }: PropsWithChildren) {
   const [queryClient] = useState(
@@ -20,9 +23,13 @@ export default function AppProviders({ children }: PropsWithChildren) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <DevModeProvider>
-        <AuthProvider>{children}</AuthProvider>
-      </DevModeProvider>
+      <ThemeProvider>
+        <AccessibilityProvider>
+          <DevModeProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </DevModeProvider>
+        </AccessibilityProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   )
 }

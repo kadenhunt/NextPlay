@@ -1,3 +1,7 @@
+/**
+ * Shared TypeScript shapes for UI and API contract.
+ * Keep in sync with services/api/nextplayApi.ts and services/mocks/mockNextPlayApi.ts.
+ */
 export type LeagueId = string
 export type UserId = string
 export type TeamId = string
@@ -31,6 +35,17 @@ export type LeagueMember = {
   userId: UserId
   role: LeagueRole
   displayName: string
+}
+
+/** League home roster row: team + record when season data exists (from standings). */
+export type LeagueMemberSpotlight = {
+  userId: UserId
+  displayName: string
+  role: LeagueRole
+  teamName: string | null
+  wins: number | null
+  losses: number | null
+  rank: number | null
 }
 
 export type League = {

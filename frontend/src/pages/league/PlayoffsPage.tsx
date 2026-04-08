@@ -30,11 +30,11 @@ export default function PlayoffsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold">Playoffs</h2>
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               Bracket view for top-seeded teams, progressed from finalized weekly matchup data.
             </p>
           </div>
@@ -43,7 +43,7 @@ export default function PlayoffsPage() {
       </div>
 
       {playoffsQuery.isLoading ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-400">
+        <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
           Loading playoffs...
         </div>
       ) : playoffsQuery.isError ? (
@@ -51,25 +51,25 @@ export default function PlayoffsPage() {
           {playoffsQuery.error instanceof Error ? playoffsQuery.error.message : 'Unable to load playoffs'}
         </div>
       ) : (playoffsQuery.data ?? []).length === 0 ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-400">
+        <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
           Playoffs are not available yet for this league.
         </div>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             <h3 className="text-base font-semibold">Semifinals</h3>
             <div className="mt-3 space-y-3">
               {semifinals.map((m) => (
-                <div key={m.id} className="rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
-                  <div className="text-xs text-zinc-500">#{m.seedA} vs #{m.seedB}</div>
+                <div key={m.id} className="np-card-inset p-3">
+                  <div className="text-xs text-zinc-500 dark:text-zinc-500">#{m.seedA} vs #{m.seedB}</div>
                   <div className="mt-1 flex items-center justify-between">
-                    <span className={m.winner === m.teamA ? 'text-emerald-400' : 'text-zinc-200'}>
+                    <span className={m.winner === m.teamA ? 'text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'}>
                       {m.teamA}
                     </span>
                     <span className="font-mono">{m.scoreA ?? '—'}</span>
                   </div>
                   <div className="mt-1 flex items-center justify-between">
-                    <span className={m.winner === m.teamB ? 'text-emerald-400' : 'text-zinc-200'}>
+                    <span className={m.winner === m.teamB ? 'text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'}>
                       {m.teamB}
                     </span>
                     <span className="font-mono">{m.scoreB ?? '—'}</span>
@@ -79,24 +79,24 @@ export default function PlayoffsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             <h3 className="text-base font-semibold">Championship</h3>
             {final ? (
-              <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
+              <div className="mt-3 np-card-inset p-3">
                 <div className="flex items-center justify-between">
-                  <span className={final.winner === final.teamA ? 'text-emerald-400' : 'text-zinc-200'}>
+                  <span className={final.winner === final.teamA ? 'text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'}>
                     {final.teamA}
                   </span>
                   <span className="font-mono">{final.scoreA ?? '—'}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between">
-                  <span className={final.winner === final.teamB ? 'text-emerald-400' : 'text-zinc-200'}>
+                  <span className={final.winner === final.teamB ? 'text-emerald-400' : 'text-zinc-800 dark:text-zinc-200'}>
                     {final.teamB}
                   </span>
                   <span className="font-mono">{final.scoreB ?? '—'}</span>
                 </div>
-                <div className="mt-3 text-xs text-zinc-500">
-                  Champion: <span className="font-medium text-zinc-200">{final.winner ?? 'TBD'}</span>
+                <div className="mt-3 text-xs text-zinc-500 dark:text-zinc-500">
+                  Champion: <span className="font-medium text-zinc-800 dark:text-zinc-200">{final.winner ?? 'TBD'}</span>
                 </div>
               </div>
             ) : null}

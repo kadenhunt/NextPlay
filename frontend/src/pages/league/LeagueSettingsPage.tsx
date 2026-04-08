@@ -142,11 +142,11 @@ export default function LeagueSettingsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold">League Settings</h2>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
               <StatusBadge state={league.state} />
               <span>Commissioner controls and draft configuration.</span>
             </div>
@@ -157,7 +157,7 @@ export default function LeagueSettingsPage() {
 
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="space-y-4 lg:col-span-2">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             <h3 className="text-base font-semibold">League Configuration</h3>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <Input
@@ -175,7 +175,7 @@ export default function LeagueSettingsPage() {
               />
             </div>
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <label className="inline-flex items-center gap-2 text-sm text-zinc-400">
+              <label className="inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
                 <input
                   type="checkbox"
                   checked={effectiveForm.isPrivate}
@@ -189,7 +189,7 @@ export default function LeagueSettingsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             {/* Handoff note: this settings surface maps directly to mock controls.
                 Replace these with backend policy endpoints once commissioner settings API is available. */}
             <h3 className="text-base font-semibold">Draft Options</h3>
@@ -207,7 +207,7 @@ export default function LeagueSettingsPage() {
                       draftType: e.target.value as 'snake' | 'auto',
                     }))
                   }
-                  className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-500/60"
+                  className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-red-500/60"
                 >
                   <option value="snake">Snake draft</option>
                   <option value="auto">Auto draft</option>
@@ -242,7 +242,7 @@ export default function LeagueSettingsPage() {
                 disabled={!isCommissioner}
               />
             </div>
-            <label className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-400">
+            <label className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
               <input
                 type="checkbox"
                 checked={effectiveForm.autoPickEnabled}
@@ -263,7 +263,7 @@ export default function LeagueSettingsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             <h3 className="text-base font-semibold">Scoring and Transactions</h3>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
@@ -277,7 +277,7 @@ export default function LeagueSettingsPage() {
                       scoringPreset: e.target.value as 'standard' | 'ppr',
                     }))
                   }
-                  className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-500/60"
+                  className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-red-500/60"
                 >
                   <option value="standard">Standard</option>
                   <option value="ppr">PPR</option>
@@ -294,7 +294,7 @@ export default function LeagueSettingsPage() {
                       tradeApproval: e.target.value as 'commissioner' | 'none',
                     }))
                   }
-                  className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-500/60"
+                  className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-red-500/60"
                 >
                   <option value="commissioner">Commissioner review</option>
                   <option value="none">No review</option>
@@ -354,7 +354,7 @@ export default function LeagueSettingsPage() {
                 }
               />
             </div>
-            <label className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-400">
+            <label className="mt-3 inline-flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
               <input
                 type="checkbox"
                 checked={effectiveForm.addDropEnabled}
@@ -371,12 +371,12 @@ export default function LeagueSettingsPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             <h3 className="text-base font-semibold">Invite</h3>
-            <p className="mt-1 text-sm text-zinc-400">
-              Code: <span className="font-mono text-zinc-100">{settingsQuery.data?.inviteCode ?? '—'}</span>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
+              Code: <span className="font-mono text-zinc-900 dark:text-zinc-100">{settingsQuery.data?.inviteCode ?? '—'}</span>
             </p>
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
               Capacity: {settingsQuery.data?.teamCount ?? 0}/{settingsQuery.data?.maxTeams ?? 0}
             </p>
             <Button
@@ -390,9 +390,9 @@ export default function LeagueSettingsPage() {
             </Button>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             <h3 className="text-base font-semibold">Roster Rules</h3>
-            <div className="mt-2 text-sm text-zinc-400">
+            <div className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
               <div>Roster cap: {settingsQuery.data?.rosterCap ?? 10}</div>
               <div>Starter slots: {settingsQuery.data?.lineupStarters ?? 4}</div>
             </div>
@@ -408,16 +408,16 @@ export default function LeagueSettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <h3 className="text-base font-semibold">Member Management</h3>
         <div className="mt-3 space-y-2">
           {league.members.map((m) => {
             const isSelf = m.userId === userId
             return (
-              <div key={m.userId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+              <div key={m.userId} className="flex flex-wrap items-center justify-between gap-3 np-card px-3 py-2">
                 <div>
-                  <div className="text-sm font-medium text-zinc-100">{m.displayName}</div>
-                  <div className="text-xs text-zinc-500">{m.role}</div>
+                  <div className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{m.displayName}</div>
+                  <div className="text-xs text-zinc-500 dark:text-zinc-500">{m.role}</div>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Button
@@ -451,26 +451,26 @@ export default function LeagueSettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <h3 className="text-base font-semibold">League Audit Trail</h3>
-        <p className="mt-1 text-xs text-zinc-500">
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
           Operational event feed for commissioner handoff and backend logging alignment.
         </p>
         <div className="mt-3 space-y-2">
           {(auditQuery.data ?? []).length ? (
             (auditQuery.data ?? []).slice(0, 12).map((evt) => (
-              <div key={evt.id} className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 py-2">
+              <div key={evt.id} className="np-card-inset px-3 py-2">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-zinc-200">{evt.type}</span>
+                  <span className="text-xs font-medium text-zinc-800 dark:text-zinc-200">{evt.type}</span>
                   <span className="text-[11px] text-zinc-600">{new Date(evt.createdAt).toLocaleString()}</span>
                 </div>
-                <div className="mt-1 text-xs text-zinc-400">
+                <div className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                   {evt.actorDisplayName}: {evt.message}
                 </div>
               </div>
             ))
           ) : (
-            <div className="text-sm text-zinc-500">No audit events yet.</div>
+            <div className="text-sm text-zinc-500 dark:text-zinc-500">No audit events yet.</div>
           )}
         </div>
       </div>

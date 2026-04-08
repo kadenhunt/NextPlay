@@ -20,17 +20,17 @@ export default function TopTicker({ userId }: Props) {
   }, [tickerQuery.data])
 
   return (
-    <div className="border-b border-zinc-800/60 bg-zinc-950">
-      <div className="mx-auto flex w-full max-w-7xl items-center overflow-hidden px-6 py-1.5">
-        <span className="mr-3 flex items-center gap-1.5 rounded-md bg-red-600/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-[0_0_16px_rgba(128,30,36,0.4)]">
+    <div className="border-b border-zinc-200/90 bg-gradient-to-r from-white via-zinc-50 to-white dark:border-zinc-800 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
+      <div className="mx-auto flex w-full max-w-[1600px] items-center overflow-hidden px-6 py-1.5">
+        <span className="font-display mr-3 flex shrink-0 items-center gap-1.5 rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-white shadow-sm shadow-red-900/20">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
           </span>
           Live
         </span>
-        <div className="ticker-wrap">
-          <div className="ticker-track text-xs text-zinc-500">
+        <div className="ticker-wrap min-w-0 flex-1" role="status" aria-live="polite" aria-atomic="true">
+          <div className="ticker-track text-[13px] font-medium leading-snug text-zinc-600 dark:text-zinc-400">
             <span>{text}</span>
             <span aria-hidden="true">{text}</span>
           </div>

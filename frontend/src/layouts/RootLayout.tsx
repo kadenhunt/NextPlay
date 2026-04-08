@@ -6,7 +6,10 @@ import { useAuth } from '@/providers/AuthProvider'
 import { useDevMode } from '@/providers/DevModeProvider'
 import TopTicker from '@/components/TopTicker'
 import DevModeToggle from '@/components/DevModeToggle'
+import HeaderBrandLogo from '@/components/HeaderBrandLogo'
+import ThemeToggle from '@/components/ThemeToggle'
 import { listMyLeagues } from '@/services/api/nextplayApi'
+import { canAccessDevModeToggle } from '@/utils/devAccess'
 
 type DemoStep = {
   path: string
@@ -49,7 +52,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
     }
 
     return [
-      { path: '/dashboard', waitMs: 4500, label: 'Dashboard' },
+      { path: '/dashboard', waitMs: 4600, label: 'Dashboard' },
       { path: `/league/${leagueId}`, waitMs: 4200, label: 'League overview' },
       { path: `/league/${leagueId}/draft`, waitMs: 5200, label: 'Draft' },
       { path: `/league/${leagueId}/team`, waitMs: 7000, label: 'Team scoring' },
@@ -97,44 +100,43 @@ export default function RootLayout({ children }: PropsWithChildren) {
     setDemoPlaying(true)
   }
 
-  return (
-    <div className="dark min-h-dvh bg-zinc-950 text-zinc-200">
-      <header className="sticky top-0 z-30 bg-zinc-950/90 backdrop-blur-xl">
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-red-500/30 to-transparent" />
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-6 py-3">
-          <Link
-            to="/dashboard"
-            className="inline-flex items-center gap-2.5 rounded-lg px-1.5 py-1 transition hover:bg-zinc-800/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
-          >
-            <span
-              className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-900 ring-1 ring-zinc-700/50"
-              aria-hidden="true"
-            >
-              <svg viewBox="0 0 32 32" className="h-5 w-5" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path
-                  d="M4.8 25.6L11 6.4H17.2L23.3 25.6H18.8L14.2 10.8L9.4 25.6H4.8Z"
-                  fill="#fafafa"
-                />
-                <path
-                  d="M15.8 19.4L27.8 6.8L24.1 18.2H27.3L20 26.1L21.7 20.2L18 20.2L15.8 19.4Z"
-                  fill="#a63038"
-                />
-              </svg>
-            </span>
-            <span className="text-sm font-semibold tracking-tight text-zinc-100">
-              Next<span className="text-red-500">Play</span>
-            </span>
-          </Link>
+  const showDevChrome = canAccessDevModeToggle(user?.email)
 
-          <div className="flex items-center gap-3">
-            <DevModeToggle />
-            {devMode && status === 'authenticated' && user ? (
+  const headerBtn =
+    'rounded-lg border px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900/80 dark:text-zinc-300 dark:hover:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100'
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col bg-zinc-100 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-200">
+      <a
+        href="#main-content"
+        className="skip-link"
+      >
+        Skip to main content
+      </a>
+      <header className="sticky top-0 z-30 border-b border-zinc-200/80 bg-white/90 shadow-sm shadow-zinc-900/[0.03] backdrop-blur-xl dark:border-zinc-800 dark:bg-zinc-950/95 dark:shadow-black/20">
+        <div className="mx-auto flex w-full max-w-[1600px] items-end justify-between gap-3 px-6 pb-2 pt-2">
+          <HeaderBrandLogo />
+
+          <div className="flex flex-wrap items-end justify-end gap-2">
+            <ThemeToggle />
+            {status === 'authenticated' && user ? (
+              <Link to="/notifications" className={headerBtn}>
+                Notifications
+              </Link>
+            ) : null}
+            {status === 'authenticated' && user ? (
+              <Link to="/settings/account" className={headerBtn}>
+                Account
+              </Link>
+            ) : null}
+            {showDevChrome ? <DevModeToggle /> : null}
+            {showDevChrome && devMode && status === 'authenticated' && user ? (
               <button
                 type="button"
-                className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 ${
+                className={`rounded-lg border px-2.5 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 ${
                   demoPlaying
-                    ? 'border-red-500/30 bg-red-500/10 text-red-300'
-                    : 'border-zinc-700/60 bg-zinc-900/80 text-zinc-300 hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100'
+                    ? 'border-red-500/35 bg-red-500/10 text-red-700 dark:text-red-300'
+                    : headerBtn
                 }`}
                 onClick={onToggleDemoPlay}
                 title="Dev demo autoplay navigation"
@@ -144,36 +146,46 @@ export default function RootLayout({ children }: PropsWithChildren) {
             ) : null}
 
             {status === 'authenticated' && user ? (
-              <button
-                type="button"
-                className="rounded-lg border border-zinc-700/60 bg-zinc-900/80 px-3 py-1.5 text-xs font-medium text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-800 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
-                onClick={onLogout}
-              >
+              <button type="button" className={headerBtn} onClick={onLogout}>
                 Logout
               </button>
             ) : (
-              <div className="text-xs text-zinc-500">
+              <div className="pb-0.5 text-xs text-zinc-500 dark:text-zinc-500">
                 {status === 'loading' ? 'Loading...' : ''}
               </div>
             )}
           </div>
         </div>
 
-        {devMode && demoPlaying && demoSteps[demoStepIdx] ? (
-          <div className="border-t border-zinc-800/90 bg-zinc-900/70 px-4 py-1.5 text-center text-[11px] text-zinc-400">
+        {showDevChrome && devMode && demoPlaying && demoSteps[demoStepIdx] ? (
+          <div className="border-t border-zinc-200 bg-zinc-50/90 px-4 py-1.5 text-center text-[11px] text-zinc-500 dark:border-zinc-800 dark:bg-zinc-900/80 dark:text-zinc-400">
             Demo step {demoStepIdx + 1}/{demoSteps.length}: {demoSteps[demoStepIdx].label}
           </div>
         ) : null}
-
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-zinc-700/50 to-transparent" />
       </header>
 
       <TopTicker userId={user?.id} />
 
-      <main className="animate-fade-up mx-auto w-full max-w-7xl px-6 py-8">
+      <main
+        id="main-content"
+        className="animate-fade-up mx-auto w-full max-w-[1600px] flex-1 px-6 py-8"
+      >
         {children}
         <Outlet />
       </main>
+      <footer className="mt-auto border-t border-zinc-200 bg-white/80 dark:border-zinc-800 dark:bg-zinc-950/90">
+        <div className="mx-auto w-full max-w-[1600px] px-6 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <span className="font-display tracking-wide text-zinc-700 dark:text-zinc-300">NextPlay</span>
+            <span className="font-display tracking-wide text-zinc-700 dark:text-zinc-300">
+              Draft. Compete. Dominate.
+            </span>
+          </div>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-500">
+            © {new Date().getFullYear()} NextPlay. All rights reserved.
+          </p>
+        </div>
+      </footer>
     </div>
   )
 }

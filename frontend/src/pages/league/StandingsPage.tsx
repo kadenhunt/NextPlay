@@ -38,11 +38,11 @@ export default function StandingsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold">Standings</h2>
-            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-400">
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
               {league ? <StatusBadge state={league.state} /> : null}
               <span>Read-only standings with tie-breaker rules.</span>
             </div>
@@ -52,7 +52,7 @@ export default function StandingsPage() {
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
-              className="rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-500/60"
+              className="rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-red-500/60"
             >
               <option value="rank">Sort: Rank</option>
               <option value="wins">Sort: Most Wins</option>
@@ -65,7 +65,7 @@ export default function StandingsPage() {
       <div className="grid gap-4 lg:grid-cols-3">
         <div className="lg:col-span-2">
           {standingsQuery.isLoading ? (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-400">
+            <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
               Loading standings…
             </div>
           ) : standingsQuery.isError ? (
@@ -133,12 +133,12 @@ export default function StandingsPage() {
         </div>
 
         <div className="space-y-3">
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             <h3 className="text-base font-semibold">Tie-breakers</h3>
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               Used when teams are tied on wins/losses and total ranking.
             </p>
-            <div className="mt-3 space-y-2 text-sm text-zinc-200">
+            <div className="mt-3 space-y-2 text-sm text-zinc-800 dark:text-zinc-200">
               <div>1. Head-to-head record between tied teams.</div>
               <div>2. Total cumulative fantasy points scored.</div>
               <div>3. Highest single-week fantasy point total.</div>
@@ -147,9 +147,9 @@ export default function StandingsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+          <div className="np-card p-5">
             <h3 className="text-base font-semibold">Integration Note</h3>
-            <p className="mt-1 text-sm text-zinc-400">
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               This standings panel is already wired to service calls. Replace the
               mocked API with your Java endpoints and keep the same query contract.
             </p>

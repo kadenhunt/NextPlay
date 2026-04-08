@@ -314,7 +314,7 @@ export default function DraftPage() {
 
   if (leagueLoadState === 'loading') {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-500">
+      <div className="np-card p-6 text-sm text-zinc-500 dark:text-zinc-500">
         Loading draft...
       </div>
     )
@@ -330,8 +330,8 @@ export default function DraftPage() {
 
   if (!draftAccess) {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6">
-        <div className="text-sm text-zinc-500">
+      <div className="np-card p-6">
+        <div className="text-sm text-zinc-500 dark:text-zinc-500">
           Draft is not available in this league state. Enable Dev Mode to access all features.
         </div>
       </div>
@@ -398,12 +398,12 @@ export default function DraftPage() {
         : league?.state?.replaceAll('_', ' ') ?? 'Idle'
 
   const draftStatusColor = draftComplete
-    ? 'text-zinc-400 border-zinc-700/40'
+    ? 'text-zinc-600 dark:text-zinc-400 border-zinc-700/40'
     : isInProgress
       ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/[0.06]'
       : isScheduled
         ? 'text-amber-400 border-amber-500/30 bg-amber-500/[0.06]'
-        : 'text-zinc-500 border-zinc-700/40'
+        : 'text-zinc-500 dark:text-zinc-500 border-zinc-700/40'
 
   const anyDevLoading =
     devStartDraftMutation.isPending ||
@@ -478,7 +478,7 @@ export default function DraftPage() {
     <div className="grid gap-4 lg:grid-cols-3">
       <div className="lg:col-span-2 space-y-4">
         {/* Draft Status Header */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+        <div className="np-card p-5">
           {isYourTurn && (
             <div className="mb-4 rounded-lg border-2 border-red-500/45 bg-red-500/[0.09] px-4 py-3 shadow-[0_0_28px_rgba(128,30,36,0.12)]">
               <div className="flex flex-wrap items-center gap-2">
@@ -488,12 +488,12 @@ export default function DraftPage() {
                 </span>
                 <span className="text-base font-bold uppercase tracking-wide text-red-200">Your pick</span>
                 {teamState?.team.name ? (
-                  <span className="text-sm font-medium text-zinc-400">
+                  <span className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
                     ({teamState.team.name})
                   </span>
                 ) : null}
               </div>
-              <p className="mt-1 text-sm text-zinc-300">
+              <p className="mt-1 text-sm text-zinc-700 dark:text-zinc-300">
                 {isDone
                   ? 'Pick window expired — you can still use dev tools or commissioner skip / auto-pick.'
                   : 'Select a player from the available list below.'}
@@ -504,7 +504,7 @@ export default function DraftPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-1.5">
               <div className="flex items-center gap-2.5">
-                <h2 className="text-lg font-semibold tracking-tight text-zinc-100">Draft Room</h2>
+                <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Draft Room</h2>
                 <span className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wider ${draftStatusColor}`}>
                   {isInProgress && !draftComplete && (
                     <span className="relative mr-1.5 inline-flex h-1.5 w-1.5 align-middle">
@@ -518,9 +518,9 @@ export default function DraftPage() {
 
               {draftState && !draftComplete ? (
                 <>
-                  <div className="text-sm text-zinc-400">
+                  <div className="text-sm text-zinc-600 dark:text-zinc-400">
                     Pick{' '}
-                    <span className="font-semibold text-zinc-100">
+                    <span className="font-semibold text-zinc-900 dark:text-zinc-100">
                       #{draftState.currentOverallPick}
                     </span>{' '}
                     of {totalPicks} (Round {draftState.currentRound})
@@ -532,13 +532,13 @@ export default function DraftPage() {
                     ) : (
                       <>
                         On clock:{' '}
-                        <span className="font-semibold text-zinc-100">{draftState.currentTeamName}</span>
+                        <span className="font-semibold text-zinc-900 dark:text-zinc-100">{draftState.currentTeamName}</span>
                       </>
                     )}
                   </div>
                   {isInProgress && (
                     <div className="flex items-center gap-2 text-sm">
-                      <span className={`font-mono font-bold tabular-nums ${secondsLeft <= 10 ? 'text-red-400' : 'text-zinc-200'}`}>
+                      <span className={`font-mono font-bold tabular-nums ${secondsLeft <= 10 ? 'text-red-400' : 'text-zinc-800 dark:text-zinc-200'}`}>
                         {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, '0')}
                       </span>
                       <span className="text-zinc-600">{isDone ? 'expired' : 'remaining'}</span>
@@ -588,7 +588,7 @@ export default function DraftPage() {
           {/* Progress bar */}
           {totalPicks > 0 && (
             <div className="mt-4">
-              <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-zinc-500">
+              <div className="flex items-center justify-between text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">
                 <span>Draft Progress</span>
                 <span className="tabular-nums">{picksMade}/{totalPicks} ({draftProgress}%)</span>
               </div>
@@ -647,13 +647,13 @@ export default function DraftPage() {
               'rounded-xl border px-4 py-3',
               isYourTurn
                 ? 'border-red-500/40 bg-red-500/[0.08] shadow-[0_0_20px_rgba(128,30,36,0.12)]'
-                : 'border-zinc-800 bg-zinc-950/60',
+                : 'border-zinc-200 bg-zinc-100 dark:border-zinc-800 dark:bg-zinc-950/60',
             ].join(' ')}
           >
             <div
               className={[
                 'text-[11px] font-medium uppercase tracking-wider',
-                isYourTurn ? 'text-red-400/90' : 'text-zinc-500',
+                isYourTurn ? 'text-red-400/90' : 'text-zinc-500 dark:text-zinc-500',
               ].join(' ')}
             >
               On clock
@@ -661,7 +661,7 @@ export default function DraftPage() {
             <div
               className={[
                 'mt-0.5 truncate text-sm font-semibold',
-                isYourTurn ? 'text-red-200' : 'text-zinc-100',
+                isYourTurn ? 'text-red-900 dark:text-red-200' : 'text-zinc-900 dark:text-zinc-100',
               ].join(' ')}
             >
               {draftComplete
@@ -671,34 +671,34 @@ export default function DraftPage() {
                   : draftState?.currentTeamName ?? 'Waiting...'}
             </div>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-3">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Round</div>
-            <div className="mt-0.5 text-sm font-semibold text-zinc-100">
+          <div className="np-card-inset px-4 py-3">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Round</div>
+            <div className="mt-0.5 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
               <span className="tabular-nums">{draftState?.currentRound ?? '—'}</span>
-              <span className="text-zinc-500"> / </span>
+              <span className="text-zinc-500 dark:text-zinc-500"> / </span>
               <span className="tabular-nums">{settingsQuery.data?.draftRounds ?? '—'}</span>
             </div>
           </div>
-          <div className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-4 py-3">
-            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Type</div>
-            <div className="mt-0.5 text-sm font-semibold text-zinc-100 capitalize">
+          <div className="np-card-inset px-4 py-3">
+            <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Type</div>
+            <div className="mt-0.5 text-sm font-semibold text-zinc-900 dark:text-zinc-100 capitalize">
               {settingsQuery.data?.draftType ?? 'snake'}
             </div>
           </div>
         </div>
 
         {/* Draft Board */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+        <div className="np-card p-5">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-semibold text-zinc-100">Draft Board</h3>
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Draft Board</h3>
             {picksMade > 0 && (
-              <span className="text-xs tabular-nums text-zinc-500">{picksMade} pick{picksMade !== 1 ? 's' : ''}</span>
+              <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-500">{picksMade} pick{picksMade !== 1 ? 's' : ''}</span>
             )}
           </div>
 
           <div className="mt-4">
             {draftQuery.isLoading ? (
-              <div className="text-sm text-zinc-500">Loading picks...</div>
+              <div className="text-sm text-zinc-500 dark:text-zinc-500">Loading picks...</div>
             ) : draftQuery.isError ? (
               <div className="text-sm text-red-400">Failed to load draft state.</div>
             ) : draftState?.picks.length ? (
@@ -707,24 +707,24 @@ export default function DraftPage() {
                   {
                     key: 'pick',
                     header: '#',
-                    render: (p) => <span className="font-mono text-zinc-400 tabular-nums">{p.overallPick}</span>,
+                    render: (p) => <span className="font-mono text-zinc-600 dark:text-zinc-400 tabular-nums">{p.overallPick}</span>,
                     className: 'w-12',
                   },
                   {
                     key: 'round',
                     header: 'Rd',
-                    render: (p) => <span className="text-zinc-500 tabular-nums">{p.round}</span>,
+                    render: (p) => <span className="text-zinc-500 dark:text-zinc-500 tabular-nums">{p.round}</span>,
                     className: 'w-12',
                   },
                   {
                     key: 'player',
                     header: 'Player',
-                    render: (p) => <span className="font-medium text-zinc-100">{p.playerName}</span>,
+                    render: (p) => <span className="font-medium text-zinc-900 dark:text-zinc-100">{p.playerName}</span>,
                   },
                   {
                     key: 'team',
                     header: 'To',
-                    render: (p) => <span className="text-zinc-300">{p.teamName}</span>,
+                    render: (p) => <span className="text-zinc-700 dark:text-zinc-300">{p.teamName}</span>,
                   },
                   {
                     key: 'auto',
@@ -747,7 +747,7 @@ export default function DraftPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div className="text-sm text-zinc-500">Waiting for the draft to begin...</div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-500">Waiting for the draft to begin...</div>
               </div>
             )}
           </div>
@@ -755,11 +755,11 @@ export default function DraftPage() {
 
         {/* Available players (board) */}
         {!draftComplete && (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-            <h3 className="text-base font-semibold text-zinc-100">Available Players</h3>
-            <p className="mt-1 text-sm text-zinc-400">
+          <div className="np-card p-5">
+            <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">Available Players</h3>
+            <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
               Search and filter. Queue players in the sidebar for quick picks on your turn, or use{' '}
-              <span className="text-zinc-300">Draft next from queue</span> when you are on the clock.
+              <span className="text-zinc-700 dark:text-zinc-300">Draft next from queue</span> when you are on the clock.
             </p>
 
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -770,10 +770,10 @@ export default function DraftPage() {
                 placeholder="Name or team..."
               />
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-300" htmlFor="pos">Position</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="pos">Position</label>
                 <select
                   id="pos"
-                  className="w-full rounded-lg border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-500/60"
+                  className="w-full rounded-lg border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-red-500/60"
                   value={position}
                   onChange={(e) => setPosition(e.target.value)}
                 >
@@ -782,10 +782,10 @@ export default function DraftPage() {
                 </select>
               </div>
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-zinc-300" htmlFor="status">Status</label>
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300" htmlFor="status">Status</label>
                 <select
                   id="status"
-                  className="w-full rounded-lg border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-100 outline-none transition focus:border-red-500/60"
+                  className="w-full rounded-lg border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-red-500/60"
                   value={playerStatus}
                   onChange={(e) => setPlayerStatus(e.target.value as PlayerStatus | 'any')}
                 >
@@ -798,7 +798,7 @@ export default function DraftPage() {
 
             <div className="mt-4">
               {playersQuery.isLoading ? (
-                <div className="text-sm text-zinc-500">Loading players...</div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-500">Loading players...</div>
               ) : playersQuery.isError ? (
                 <div className="text-sm text-red-400">Failed to load players.</div>
               ) : (
@@ -809,22 +809,22 @@ export default function DraftPage() {
                       header: 'Player',
                       render: (p) => (
                         <div className="space-y-0.5">
-                          <div className="font-medium text-zinc-100">{p.name}</div>
-                          <div className="text-xs text-zinc-500">{p.team} &middot; {p.position}</div>
+                          <div className="font-medium text-zinc-900 dark:text-zinc-100">{p.name}</div>
+                          <div className="text-xs text-zinc-500 dark:text-zinc-500">{p.team} &middot; {p.position}</div>
                         </div>
                       ),
                     },
                     {
                       key: 'points',
                       header: 'Proj',
-                      render: (p) => <span className="font-mono tabular-nums text-zinc-200">{p.projectedPoints}</span>,
+                      render: (p) => <span className="font-mono tabular-nums text-zinc-800 dark:text-zinc-200">{p.projectedPoints}</span>,
                       className: 'whitespace-nowrap',
                     },
                     {
                       key: 'status',
                       header: 'Status',
                       render: (p) => (
-                        <span className={`text-xs ${p.status === 'INJURED' ? 'text-amber-400' : p.status === 'OUT' ? 'text-red-400' : 'text-zinc-500'}`}>
+                        <span className={`text-xs ${p.status === 'INJURED' ? 'text-amber-400' : p.status === 'OUT' ? 'text-red-400' : 'text-zinc-500 dark:text-zinc-500'}`}>
                           {p.status}
                         </span>
                       ),
@@ -871,9 +871,9 @@ export default function DraftPage() {
       {/* Sidebar - Roster */}
       <div className="space-y-4">
         {!draftComplete && (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-            <h3 className="text-sm font-semibold text-zinc-100">Draft queue</h3>
-            <p className="mt-1 text-xs text-zinc-500">
+          <div className="np-card p-5">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Draft queue</h3>
+            <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
               Priority order for your next picks. Reorder with the arrows; we skip anyone already drafted.
             </p>
             {draftQueueIds.length === 0 ? (
@@ -889,11 +889,11 @@ export default function DraftPage() {
                       className={[
                         'flex items-center gap-2 rounded-lg border px-2 py-2 text-sm',
                         taken
-                          ? 'border-zinc-800/60 bg-zinc-950/30 text-zinc-600 line-through decoration-zinc-600'
-                          : 'border-zinc-800 bg-zinc-950/50 text-zinc-200',
+                          ? 'border-zinc-200/80 bg-zinc-100/80 text-zinc-500 line-through decoration-zinc-400 dark:border-zinc-800/60 dark:bg-zinc-950/30 dark:text-zinc-600 dark:decoration-zinc-600'
+                          : 'border-zinc-200 bg-zinc-50 text-zinc-800 dark:border-zinc-800 dark:bg-zinc-950/50 dark:text-zinc-200',
                       ].join(' ')}
                     >
-                      <span className="w-5 shrink-0 text-center text-xs font-mono text-zinc-500">{index + 1}</span>
+                      <span className="w-5 shrink-0 text-center text-xs font-mono text-zinc-500 dark:text-zinc-500">{index + 1}</span>
                       <span className="min-w-0 flex-1 truncate font-medium">
                         {qp?.name ?? `Player ${qid.slice(0, 6)}…`}
                       </span>
@@ -903,7 +903,7 @@ export default function DraftPage() {
                           aria-label="Move up"
                           disabled={index === 0}
                           onClick={() => moveInQueue(index, -1)}
-                          className="rounded border border-zinc-700/60 px-1.5 py-0.5 text-xs text-zinc-400 transition hover:bg-zinc-800 disabled:opacity-30"
+                          className="rounded border border-zinc-700/60 px-1.5 py-0.5 text-xs text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-800 disabled:opacity-30"
                         >
                           ↑
                         </button>
@@ -912,7 +912,7 @@ export default function DraftPage() {
                           aria-label="Move down"
                           disabled={index === draftQueueIds.length - 1}
                           onClick={() => moveInQueue(index, 1)}
-                          className="rounded border border-zinc-700/60 px-1.5 py-0.5 text-xs text-zinc-400 transition hover:bg-zinc-800 disabled:opacity-30"
+                          className="rounded border border-zinc-700/60 px-1.5 py-0.5 text-xs text-zinc-600 dark:text-zinc-400 transition hover:bg-zinc-800 disabled:opacity-30"
                         >
                           ↓
                         </button>
@@ -920,7 +920,7 @@ export default function DraftPage() {
                           type="button"
                           aria-label="Remove from queue"
                           onClick={() => removeFromQueue(qid)}
-                          className="rounded border border-zinc-700/60 px-1.5 py-0.5 text-xs text-zinc-400 transition hover:border-red-500/40 hover:text-red-400"
+                          className="rounded border border-zinc-700/60 px-1.5 py-0.5 text-xs text-zinc-600 dark:text-zinc-400 transition hover:border-red-500/40 hover:text-red-400"
                         >
                           ×
                         </button>
@@ -946,12 +946,12 @@ export default function DraftPage() {
           </div>
         )}
 
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500">Your team</p>
-          <h3 className="mt-0.5 text-lg font-bold tracking-tight text-zinc-100">
+        <div className="np-card p-5">
+          <p className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Your team</p>
+          <h3 className="mt-0.5 text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
             {teamQuery.isLoading ? '…' : teamState?.team.name ?? '—'}
           </h3>
-          <div className="mt-2 flex items-center gap-2 text-sm text-zinc-400">
+          <div className="mt-2 flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
             {rosterPlayersInTeam.length > 0 && (
               <span className="tabular-nums">{rosterPlayersInTeam.length} player{rosterPlayersInTeam.length !== 1 ? 's' : ''}</span>
             )}
@@ -966,7 +966,7 @@ export default function DraftPage() {
         </div>
 
         {teamQuery.isLoading ? (
-          <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-400">
+          <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
             Loading roster...
           </div>
         ) : teamQuery.isError || !teamState ? (
@@ -974,9 +974,9 @@ export default function DraftPage() {
             Failed to load your team.
           </div>
         ) : (
-          <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-900/60 p-4">
+          <div className="space-y-2 np-card p-4">
             {rosterPlayersQuery.isLoading ? (
-              <div className="text-sm text-zinc-500">Loading roster players...</div>
+              <div className="text-sm text-zinc-500 dark:text-zinc-500">Loading roster players...</div>
             ) : rosterPlayersInTeam.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-6 text-center">
                 <div className="text-zinc-700">
@@ -984,7 +984,7 @@ export default function DraftPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                   </svg>
                 </div>
-                <div className="text-sm text-zinc-500">Draft players to build your roster.</div>
+                <div className="text-sm text-zinc-500 dark:text-zinc-500">Draft players to build your roster.</div>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -1001,12 +1001,12 @@ export default function DraftPage() {
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="truncate text-sm font-medium text-zinc-100">{p!.name}</span>
+                          <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">{p!.name}</span>
                           {isStarter && (
                             <span className="rounded bg-red-500/15 px-1.5 py-px text-[10px] font-semibold uppercase tracking-wider text-red-400">S</span>
                           )}
                         </div>
-                        <div className="text-xs text-zinc-500">
+                        <div className="text-xs text-zinc-500 dark:text-zinc-500">
                           {p!.team} &middot; {p!.position}
                         </div>
                       </div>
@@ -1016,7 +1016,7 @@ export default function DraftPage() {
                         disabled={!lineupEditorEnabled}
                         className={`shrink-0 rounded-md border px-2 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                           isStarter
-                            ? 'border-zinc-700/60 bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800'
+                            ? 'border-zinc-700/60 bg-zinc-900/80 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-800'
                             : 'border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20'
                         }`}
                       >

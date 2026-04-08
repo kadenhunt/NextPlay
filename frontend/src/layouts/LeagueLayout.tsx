@@ -1,12 +1,9 @@
-import { useEffect } from 'react'
-import { Link, NavLink, Outlet, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { useAuth } from '@/providers/AuthProvider'
+import { useEffect, useMemo } from 'react'
+import { NavLink, Outlet, useLocation, useParams } from 'react-router-dom'
 import { useLeague } from '@/providers/LeagueProvider'
 import { useDevMode } from '@/providers/DevModeProvider'
 import LeagueProvider from '@/providers/LeagueProvider'
 import StatusBadge from '@/components/StatusBadge'
-import { getMyTeamState } from '@/services/api/nextplayApi'
 import {
   canAccessDraft,
   canAccessMatchups,
@@ -16,7 +13,7 @@ import {
 } from '@/utils/leagueGates'
 
 const tabs = [
-  { key: '', label: 'Overview' },
+  { key: 'overview', label: 'Overview' },
   { key: 'draft', label: 'Draft' },
   { key: 'team', label: 'Team' },
   { key: 'players', label: 'Players' },
@@ -29,7 +26,7 @@ const tabs = [
 
 function LeagueLayoutInner() {
   const { id } = useParams()
-  const { user } = useAuth()
+  const location = useLocation()
   const { status, league, error, userRole } = useLeague()
   const { devMode } = useDevMode()
 
@@ -42,12 +39,11 @@ function LeagueLayoutInner() {
     }
   }, [id])
 
-  const myTeamQuery = useQuery({
-    queryKey: ['myTeamState', id, user?.id],
-    queryFn: () => getMyTeamState(id!, user!.id),
-    enabled: Boolean(id && user?.id && league && status === 'ready'),
-  })
-  const myTeamName = myTeamQuery.data?.team.name
+  const activeTabLabel = useMemo(() => {
+    const tab = tabs.find((t) => t.key && location.pathname.endsWith(`/${t.key}`))
+    if (!tab && location.pathname.includes('/league/')) return 'Matchups'
+    return tab?.label ?? 'Overview'
+  }, [location.pathname])
 
   const roleLabel = (role: string | null) => {
     if (!role) return '\u2014'
@@ -55,9 +51,19 @@ function LeagueLayoutInner() {
     return 'Member'
   }
 
+  const tabUnavailableReason = (key: string) => {
+    if (key === 'draft') return 'Available when draft opens'
+    if (key === 'players') return 'Available in active stages'
+    if (key === 'matchups') return 'Available after draft starts'
+    if (key === 'standings') return 'Available after season data exists'
+    if (key === 'playoffs') return 'Available in playoffs'
+    if (key === 'settings') return 'Commissioner only'
+    return 'Not available yet'
+  }
+
   if (status === 'loading') {
     return (
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-6 text-sm text-zinc-400">
+      <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
         Loading league...
       </div>
     )
@@ -81,48 +87,36 @@ function LeagueLayoutInner() {
 
   return (
     <div className="space-y-5">
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5">
+      <div className="np-card p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">{league.name}</h1>
+              <h1 className="font-display text-2xl font-semibold tracking-wide text-zinc-900 dark:text-zinc-100">
+                {league.name}
+              </h1>
               <StatusBadge state={league.state} />
             </div>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-400">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-zinc-600 dark:text-zinc-400">
               <span>
-                Sport: <span className="font-medium text-zinc-200">{league.sport}</span>
+                Sport:{' '}
+                <span className="font-medium capitalize text-zinc-800 dark:text-zinc-200">{league.sport}</span>
               </span>
-              <span className="text-zinc-600">&middot;</span>
+              <span className="text-zinc-400 dark:text-zinc-600">&middot;</span>
               <span>Role: {roleLabel(userRole)}</span>
-              <span className="text-zinc-600">&middot;</span>
+              <span className="text-zinc-400 dark:text-zinc-600">&middot;</span>
               <span>Members: {league.members.length}</span>
-              {myTeamName && (
-                <>
-                  <span className="text-zinc-600">&middot;</span>
-                  <span className="font-medium text-zinc-200">
-                    Your team:{' '}
-                    <span className="text-zinc-100">{myTeamName}</span>
-                  </span>
-                </>
-              )}
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              to="/dashboard"
-              className="inline-flex items-center justify-center rounded-lg border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-300 transition hover:border-zinc-600 hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50"
-            >
-              Back to Dashboard
-            </Link>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-1.5">
+        <p className="sr-only" aria-live="polite">
+          Current section: {activeTabLabel}
+        </p>
+        <div className="mt-4 flex flex-wrap items-center gap-1.5" role="navigation" aria-label="League sections">
           {tabs.map((t) => {
             const enabled = devMode
               ? true
-              : t.key === ''
+              : t.key === 'overview'
                 ? true
                 : t.key === 'draft'
                   ? canAccessDraft(league.state)
@@ -147,10 +141,11 @@ function LeagueLayoutInner() {
               return (
                 <span
                   key={t.key}
-                  className="cursor-not-allowed rounded-lg border border-zinc-800/60 bg-zinc-900/40 px-3 py-1.5 text-xs font-medium text-zinc-600"
+                  className="cursor-not-allowed rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-900 dark:border-amber-500/35 dark:bg-amber-500/[0.1] dark:text-amber-200"
                   aria-disabled="true"
+                  title={tabUnavailableReason(t.key)}
                 >
-                  {t.label}
+                  {t.label} · Locked
                 </span>
               )
             }
@@ -158,18 +153,23 @@ function LeagueLayoutInner() {
             return (
               <NavLink
                 key={t.key}
-                to={t.key ? `/league/${id}/${t.key}` : `/league/${id}`}
-                end={t.key === ''}
+                to={`/league/${id}/${t.key}`}
+                end={false}
                 className={({ isActive }) =>
                   [
                     'rounded-lg border px-3 py-1.5 text-xs font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50',
                     isActive
-                      ? 'border-red-500/30 bg-red-500/10 text-red-400'
-                      : 'border-zinc-800/60 bg-zinc-900/40 text-zinc-400 hover:border-zinc-700 hover:bg-zinc-800/60 hover:text-zinc-200',
+                      ? 'border-red-500/30 bg-red-500/10 text-red-600 dark:text-red-400'
+                      : 'border-zinc-200 bg-white text-zinc-600 hover:border-zinc-300 hover:bg-zinc-100 hover:text-zinc-900 dark:border-zinc-800/60 dark:bg-zinc-900/40 dark:text-zinc-400 dark:hover:border-zinc-700 dark:hover:bg-zinc-800/60 dark:hover:text-zinc-200',
                   ].join(' ')
                 }
               >
-                {t.label}
+                {({ isActive }) => (
+                  <>
+                    {t.label}
+                    {isActive ? <span className="sr-only"> (current section)</span> : null}
+                  </>
+                )}
               </NavLink>
             )
           })}
