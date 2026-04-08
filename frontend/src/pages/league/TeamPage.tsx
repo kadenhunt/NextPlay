@@ -57,7 +57,10 @@ export default function TeamPage() {
 
   const teamState = teamQuery.data
   const isLocked = teamState?.isLineupLocked ?? true
-  const starters = teamState?.team.lineup.starters ?? []
+  const starters = useMemo(
+    () => teamState?.team.lineup.starters ?? [],
+    [teamState?.team.lineup.starters],
+  )
 
   const teamBrandKey = `nextplay.team.brand.${leagueId}.${teamState?.team.id ?? 'unknown'}`
   const teamBrand = useMemo(() => {
@@ -101,7 +104,7 @@ export default function TeamPage() {
 
   useEffect(() => {
     setStarterDraft(starters)
-  }, [starters.join(',')])
+  }, [starters])
 
   const toggleStarter = (playerId: PlayerId) => {
     if (!teamState || isLocked) return

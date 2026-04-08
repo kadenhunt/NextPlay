@@ -76,7 +76,7 @@ export default function LeagueProvider({ children }: PropsWithChildren) {
       isCommissioner: userRole === 'COMMISSIONER',
       leagueId,
     }
-  }, [leagueId, query.error, query.data, query.isError, query.isLoading, query.isSuccess])
+  }, [leagueId, query.error, query.data, query.isError, query.isLoading])
 
   return <LeagueContext.Provider value={value}>{children}</LeagueContext.Provider>
 }

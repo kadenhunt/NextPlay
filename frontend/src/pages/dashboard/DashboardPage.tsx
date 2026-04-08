@@ -54,8 +54,7 @@ export default function DashboardPage() {
     enabled: Boolean(userId),
   })
 
-  const leagues = leaguesQuery.data ?? []
-  const leagueCards = useMemo(() => leagues, [leagues])
+  const leagueCards = useMemo(() => leaguesQuery.data ?? [], [leaguesQuery.data])
   const commissionerCount = useMemo(
     () => leagueCards.filter((l) => l.role === 'COMMISSIONER').length,
     [leagueCards],

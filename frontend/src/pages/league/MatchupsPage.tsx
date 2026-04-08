@@ -136,7 +136,7 @@ export default function MatchupsPage() {
     enabled: Boolean(leagueId && userId && league),
   })
 
-  const matchups = matchupsQuery.data ?? []
+  const matchups = useMemo(() => matchupsQuery.data ?? [], [matchupsQuery.data])
 
   const selectedMatchup = useMemo(() => {
     if (!selectedMatchupId) return null

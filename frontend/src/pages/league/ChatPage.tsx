@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthProvider'
 import { useLeague } from '@/providers/LeagueProvider'
 import { getChatMessages, postChatMessage } from '@/services/api/nextplayApi'
-import type { ChatMessage } from '@/types/models'
 import Button from '@/components/Button'
 import StatusBadge from '@/components/StatusBadge'
 
@@ -29,11 +28,7 @@ export default function ChatPage() {
     refetchInterval: POLL_MS,
   })
 
-  const messages = messagesQuery.data ?? []
-
-  const groupedMessages: ChatMessage[] = useMemo(() => {
-    return messages
-  }, [messages])
+  const messages = useMemo(() => messagesQuery.data ?? [], [messagesQuery.data])
 
   const sendMutation = useMutation({
     mutationFn: () => postChatMessage(leagueId, userId!, text),
@@ -92,7 +87,7 @@ export default function ChatPage() {
       ) : (
         <div className="np-card p-5">
           <div className="flex flex-col gap-3">
-            {groupedMessages.map((m) => (
+            {messages.map((m) => (
               <div key={m.id} className="rounded-md border border-zinc-800/60 p-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <div className="text-sm font-medium">{m.displayName}</div>

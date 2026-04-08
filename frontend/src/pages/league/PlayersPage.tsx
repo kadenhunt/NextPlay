@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { startTransition, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthProvider'
@@ -59,7 +59,10 @@ export default function PlayersPage() {
     try {
       const raw = localStorage.getItem(filtersStorageKey)
       if (!raw) return
-      setSavedFilters(JSON.parse(raw) as Array<{ name: string; query: PlayerQuery; updatedAt: string }>)
+      const parsed = JSON.parse(raw) as Array<{ name: string; query: PlayerQuery; updatedAt: string }>
+      startTransition(() => {
+        setSavedFilters(parsed)
+      })
     } catch {
       /* noop */
     }
@@ -97,7 +100,7 @@ export default function PlayersPage() {
     enabled: Boolean(leagueId && userId && selectedPlayerId && detailOpen && league),
   })
 
-  const players = playersQuery.data ?? []
+  const players = useMemo(() => playersQuery.data ?? [], [playersQuery.data])
 
   const positions = useMemo(() => {
     const set = new Set((facetsQuery.data ?? []).map((p) => p.position))

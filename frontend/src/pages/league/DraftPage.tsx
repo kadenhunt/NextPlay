@@ -163,7 +163,7 @@ export default function DraftPage() {
 
   const draftState = draftQuery.data
   const teamState = teamQuery.data
-  const rosterPlayers = rosterPlayersQuery.data ?? []
+  const rosterPlayers = useMemo(() => rosterPlayersQuery.data ?? [], [rosterPlayersQuery.data])
 
   const pickedPlayerIds = useMemo(
     () => new Set(draftState?.picks.map((p) => p.playerId) ?? []),
@@ -216,12 +216,15 @@ export default function DraftPage() {
     return new Map(rosterPlayers.map((p) => [p.id, p]))
   }, [rosterPlayers, teamState])
 
-  const starterIdsFromTeam = teamState?.team.lineup.starters ?? []
+  const starterIdsFromTeam = useMemo(
+    () => teamState?.team.lineup.starters ?? [],
+    [teamState?.team.lineup.starters],
+  )
   const [starterDraft, setStarterDraft] = useState<PlayerId[]>(starterIdsFromTeam)
 
   useEffect(() => {
     setStarterDraft(starterIdsFromTeam)
-  }, [starterIdsFromTeam.join(',')])
+  }, [starterIdsFromTeam])
 
   const [saveLoading, setSaveLoading] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)

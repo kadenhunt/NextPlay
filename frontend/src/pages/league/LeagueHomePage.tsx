@@ -113,6 +113,32 @@ export default function LeagueHomePage() {
   const roleLabel = (role: string) =>
     role === 'COMMISSIONER' ? 'Commissioner' : 'Member'
 
+  const weekLabel = useMemo(() => {
+    const now = new Date()
+    const monday = new Date(now)
+    const day = monday.getDay()
+    const diff = day === 0 ? -6 : 1 - day
+    monday.setDate(monday.getDate() + diff)
+    return `Week of ${monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
+  }, [])
+
+  const briefItems = useMemo(() => {
+    if (!league) return []
+    const myItems = (weeklyFeedQuery.data ?? []).filter((i) =>
+      i.label.includes(league.name),
+    )
+    if (myItems.length > 0) return myItems.slice(0, 4).map((i) => i.label)
+    const fallback = [
+      `${league.name}: current state is ${league.state.replaceAll('_', ' ').toLowerCase()}.`,
+      `${league.members.length} member${league.members.length === 1 ? '' : 's'} active in this league.`,
+    ]
+    const spotlight = memberSpotlightQuery.data?.slice(0, 2).map((m) => {
+      const rec = m.wins != null && m.losses != null ? ` (${m.wins}-${m.losses})` : ''
+      return `${m.displayName}: ${m.teamName ?? 'No team'}${rec}`
+    }) ?? []
+    return [...fallback, ...spotlight].slice(0, 4)
+  }, [weeklyFeedQuery.data, league, memberSpotlightQuery.data])
+
   if (status === 'loading') {
     return (
       <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
@@ -147,29 +173,6 @@ export default function LeagueHomePage() {
   ]
 
   const visibleActions = stateActions.filter((a) => a.when.includes(league.state))
-  const weekLabel = useMemo(() => {
-    const now = new Date()
-    const monday = new Date(now)
-    const day = monday.getDay()
-    const diff = day === 0 ? -6 : 1 - day
-    monday.setDate(monday.getDate() + diff)
-    return `Week of ${monday.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`
-  }, [])
-  const briefItems = useMemo(() => {
-    const myItems = (weeklyFeedQuery.data ?? []).filter((i) =>
-      i.label.includes(league.name),
-    )
-    if (myItems.length > 0) return myItems.slice(0, 4).map((i) => i.label)
-    const fallback = [
-      `${league.name}: current state is ${league.state.replaceAll('_', ' ').toLowerCase()}.`,
-      `${league.members.length} member${league.members.length === 1 ? '' : 's'} active in this league.`,
-    ]
-    const spotlight = memberSpotlightQuery.data?.slice(0, 2).map((m) => {
-      const rec = m.wins != null && m.losses != null ? ` (${m.wins}-${m.losses})` : ''
-      return `${m.displayName}: ${m.teamName ?? 'No team'}${rec}`
-    }) ?? []
-    return [...fallback, ...spotlight].slice(0, 4)
-  }, [weeklyFeedQuery.data, league.name, league.state, league.members.length, memberSpotlightQuery.data])
 
   return (
     <div className="space-y-5">

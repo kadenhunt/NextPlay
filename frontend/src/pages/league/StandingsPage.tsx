@@ -27,7 +27,7 @@ export default function StandingsPage() {
     enabled: Boolean(leagueId && userId && league),
   })
 
-  const standings = standingsQuery.data ?? []
+  const standings = useMemo(() => standingsQuery.data ?? [], [standingsQuery.data])
 
   const sortedRows = useMemo(() => {
     const rows = standings.slice()
