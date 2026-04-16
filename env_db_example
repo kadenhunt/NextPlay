@@ -1,0 +1,5 @@
+POSTGRES_USER="admin"
+POSTGRES_PW="NexyPlay1234"
+POSTGRES_DB="NextPlay"
+PGADMIN_MAIL="h.cubed624@gmail.com"
+PGADMIN_PW="NextPlay1234"
