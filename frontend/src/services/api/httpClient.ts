@@ -32,16 +32,27 @@ export async function getJson<TResponse>(
   path: string,
   query?: Record<string, string | number | undefined>,
 ): Promise<TResponse> {
-  const response = await fetch(buildUrl(path, query), {
-    headers: {
-      Accept: 'application/json',
-    },
-  })
+  const requestUrl = buildUrl(path, query)
+  console.log('[httpClient] GET', requestUrl)
+
+  let response: Response
+
+  try {
+    response = await fetch(requestUrl, {
+      headers: {
+        Accept: 'application/json',
+      },
+    })
+  } catch (error) {
+    console.error('[httpClient] network failure', requestUrl, error)
+    throw error
+  }
 
   const text = await response.text()
   const body = text ? JSON.parse(text) : null
 
   if (!response.ok) {
+    console.error('[httpClient] http failure', requestUrl, response.status, body)
     const message =
       body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
         ? body.message
@@ -49,5 +60,6 @@ export async function getJson<TResponse>(
     throw new HttpApiError(message, response.status)
   }
 
+  console.log('[httpClient] success', requestUrl, body)
   return body as TResponse
 }

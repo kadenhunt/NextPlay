@@ -1,5 +1,5 @@
 import express from "express";
-
+import cors from "cors";
 import { authRouter } from "./routes/auth";
 import { chatRouter } from "./routes/chat";
 import { draftRouter } from "./routes/draft";
@@ -10,7 +10,12 @@ import { sourceDataRouter } from "./routes/sourceData";
 import { teamsRouter } from "./routes/teams";
 
 export const app = express();
-
+app.use(
+    cors({
+      origin: "http://localhost:5173",
+      credentials: true,
+    })
+  );
 app.use(express.json());
 
 app.use("/health", healthRouter);
