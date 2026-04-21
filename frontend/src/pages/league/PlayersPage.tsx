@@ -19,6 +19,9 @@ import ScoringBreakdownPanel from '@/components/ScoringBreakdownPanel'
 import StatusBadge from '@/components/StatusBadge'
 import Table from '@/components/Table'
 
+const filterSelectClass =
+  'w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-500/70 dark:border-zinc-700/60 dark:bg-zinc-900/80 dark:text-zinc-100'
+
 export default function PlayersPage() {
   const { id: leagueIdParam } = useParams()
   const leagueId = leagueIdParam ?? ''
@@ -190,7 +193,7 @@ export default function PlayersPage() {
       </div>
 
       <div className="np-card p-5">
-        <div className="mb-4 rounded-lg border border-zinc-800/70 bg-zinc-950/40 p-3">
+        <div className="np-card-inset p-3">
           <div className="flex flex-wrap items-end gap-2">
             <Input
               label="Saved filter name"
@@ -229,7 +232,7 @@ export default function PlayersPage() {
                     setDrafted(f.query.drafted ?? 'available')
                     setSort(f.query.sort ?? 'projectedPoints_desc')
                   }}
-                  className="rounded-md border border-zinc-700/60 bg-zinc-900 px-2.5 py-1 text-xs text-zinc-700 dark:text-zinc-300 hover:border-zinc-600"
+                  className="rounded-md border border-zinc-200 bg-white px-2.5 py-1 text-xs text-zinc-800 transition hover:border-zinc-300 dark:border-zinc-700/60 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:border-zinc-600"
                   title={`Saved ${new Date(f.updatedAt).toLocaleString()}`}
                 >
                   {f.name}
@@ -252,7 +255,7 @@ export default function PlayersPage() {
             </label>
             <select
               id="position"
-              className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm outline-none transition focus:border-red-500/60"
+              className={filterSelectClass}
               value={position}
               onChange={(e) => setPosition(e.target.value)}
             >
@@ -271,7 +274,7 @@ export default function PlayersPage() {
             </label>
             <select
               id="team"
-              className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm outline-none transition focus:border-red-500/60"
+              className={filterSelectClass}
               value={team}
               onChange={(e) => setTeam(e.target.value)}
             >
@@ -292,7 +295,7 @@ export default function PlayersPage() {
             </label>
             <select
               id="status"
-              className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm outline-none transition focus:border-red-500/60"
+              className={filterSelectClass}
               value={status}
               onChange={(e) => setStatus(e.target.value as PlayerStatus | 'any')}
             >
@@ -309,7 +312,7 @@ export default function PlayersPage() {
             </label>
             <select
               id="drafted"
-              className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm outline-none transition focus:border-red-500/60"
+              className={filterSelectClass}
               value={drafted}
               onChange={(e) => setDrafted(e.target.value as PlayerQuery['drafted'])}
             >
@@ -325,7 +328,7 @@ export default function PlayersPage() {
             </label>
             <select
               id="sort"
-              className="w-full rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm outline-none transition focus:border-red-500/60"
+              className={filterSelectClass}
               value={sort}
               onChange={(e) => setSort(e.target.value as PlayerQuery['sort'])}
             >
@@ -433,11 +436,11 @@ export default function PlayersPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <span className="rounded-md border border-zinc-700/60 bg-zinc-900/80 px-3 py-1 text-xs">
+              <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs text-zinc-900 dark:border-zinc-700/60 dark:bg-zinc-900/80 dark:text-zinc-100">
                 Status:{' '}
                 <span className="font-medium">{(playerDetailQuery.data ?? selectedPlayer).status}</span>
               </span>
-              <span className="rounded-md border border-zinc-700/60 bg-zinc-900/80 px-3 py-1 text-xs">
+              <span className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-1 text-xs text-zinc-900 dark:border-zinc-700/60 dark:bg-zinc-900/80 dark:text-zinc-100">
                 Drafted:{' '}
                 <span className="font-medium">
                   {(playerDetailQuery.data ?? selectedPlayer).drafted ? 'Yes' : 'No'}
@@ -445,7 +448,7 @@ export default function PlayersPage() {
               </span>
             </div>
 
-            <div className="rounded-md border border-zinc-700/60 bg-zinc-900/80 p-3">
+            <div className="rounded-md border border-zinc-200 bg-zinc-50 p-3 text-zinc-900 dark:border-zinc-700/60 dark:bg-zinc-900/80 dark:text-zinc-100">
               Projected points:{' '}
               <span className="font-mono">
                 {(playerDetailQuery.data ?? selectedPlayer).projectedPoints}

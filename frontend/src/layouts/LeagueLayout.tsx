@@ -1,7 +1,9 @@
 import { useEffect, useMemo } from 'react'
 import { NavLink, Outlet, useLocation, useParams } from 'react-router-dom'
+import { useAuth } from '@/providers/AuthProvider'
 import { useLeague } from '@/providers/LeagueProvider'
 import { useDevMode } from '@/providers/DevModeProvider'
+import { markOnboardingOpenedLeague } from '@/utils/onboardingStorage'
 import LeagueProvider from '@/providers/LeagueProvider'
 import StatusBadge from '@/components/StatusBadge'
 import {
@@ -27,6 +29,7 @@ const tabs = [
 function LeagueLayoutInner() {
   const { id } = useParams()
   const location = useLocation()
+  const { user } = useAuth()
   const { status, league, error, userRole } = useLeague()
   const { devMode } = useDevMode()
 
@@ -38,6 +41,11 @@ function LeagueLayoutInner() {
       /* noop */
     }
   }, [id])
+
+  useEffect(() => {
+    if (status !== 'ready' || !league || !user?.id) return
+    markOnboardingOpenedLeague(user.id)
+  }, [status, league, user?.id])
 
   const activeTabLabel = useMemo(() => {
     const tab = tabs.find((t) => t.key && location.pathname.endsWith(`/${t.key}`))

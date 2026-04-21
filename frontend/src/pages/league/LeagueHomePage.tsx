@@ -188,7 +188,7 @@ export default function LeagueHomePage() {
           </div>
           <StatusBadge state={league.state} />
         </div>
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-zinc-800/60 bg-zinc-950/40 px-3 py-2">
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800/60 dark:bg-zinc-950/40">
           <div>
             <div className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-500">Weekly Brief</div>
             <p className="text-xs text-zinc-600 dark:text-zinc-400">{weekLabel}</p>
@@ -198,15 +198,15 @@ export default function LeagueHomePage() {
           </Button>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-4 py-3">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800/60 dark:bg-zinc-950/60">
             <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Members</div>
             <div className="mt-1 text-2xl font-bold tabular-nums text-zinc-900 dark:text-zinc-100">{league.members.length}</div>
           </div>
-          <div className="rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-4 py-3">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800/60 dark:bg-zinc-950/60">
             <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">Your Role</div>
             <div className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{roleLabel(userRole ?? 'MEMBER')}</div>
           </div>
-          <div className="rounded-lg border border-zinc-800/60 bg-zinc-950/60 px-4 py-3">
+          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800/60 dark:bg-zinc-950/60">
             <div className="text-[11px] font-medium uppercase tracking-wider text-zinc-500 dark:text-zinc-500">State</div>
             <div className="mt-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{league.state.replaceAll('_', ' ')}</div>
           </div>
@@ -237,7 +237,10 @@ export default function LeagueHomePage() {
           </p>
           <ul className="space-y-2">
             {briefItems.map((line, idx) => (
-              <li key={`${line}-${idx}`} className="flex items-start gap-2 rounded-md border border-zinc-800/60 bg-zinc-950/40 px-3 py-2">
+              <li
+                key={`${line}-${idx}`}
+                className="flex items-start gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 dark:border-zinc-800/60 dark:bg-zinc-950/40"
+              >
                 <span aria-hidden="true" className="mt-[7px] inline-block h-1.5 w-1.5 rounded-full bg-red-400" />
                 <span>{line}</span>
               </li>
@@ -344,10 +347,10 @@ export default function LeagueHomePage() {
             return (
               <div
                 key={m.userId}
-                className="flex flex-col gap-1 rounded-lg border border-zinc-800/40 bg-zinc-950/40 px-3 py-2 transition hover:border-zinc-700/60 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                className="flex flex-col gap-1 rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 transition hover:border-zinc-300 dark:border-zinc-800/40 dark:bg-zinc-950/40 dark:hover:border-zinc-700/60 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-zinc-800 text-[11px] font-bold uppercase text-zinc-600 dark:text-zinc-400">
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-zinc-200 bg-white text-[11px] font-bold uppercase text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400">
                     {m.displayName.charAt(0)}
                   </div>
                   <div className="min-w-0">

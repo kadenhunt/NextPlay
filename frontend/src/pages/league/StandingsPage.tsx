@@ -52,7 +52,7 @@ export default function StandingsPage() {
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
-              className="rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-red-500/60"
+              className="rounded-xl border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-500/70 dark:border-zinc-700/60 dark:bg-zinc-900/80 dark:text-zinc-100 dark:focus:border-red-500/60"
             >
               <option value="rank">Sort: Rank</option>
               <option value="wins">Sort: Most Wins</option>

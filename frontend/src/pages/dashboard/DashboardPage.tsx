@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/providers/AuthProvider'
 import { useDevMode } from '@/providers/DevModeProvider'
@@ -14,9 +14,11 @@ import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Modal from '@/components/Modal'
 import StatusBadge from '@/components/StatusBadge'
+import { onboardingStorageKey, readOnboardingSnapshot } from '@/utils/onboardingStorage'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
+  const location = useLocation()
   const queryClient = useQueryClient()
   const { user, emailVerified, resendVerificationEmail, markEmailVerifiedForDemo } = useAuth()
   const { devMode } = useDevMode()
@@ -66,22 +68,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!userId) return
-    const key = `nextplay.onboarding.${userId}`
-    try {
-      const raw = localStorage.getItem(key)
-      if (raw) {
-        const parsed = JSON.parse(raw) as { checks?: Record<string, boolean>; dismissed?: boolean }
-        setOnboardingChecks(parsed.checks ?? {})
-        setOnboardingDismissed(Boolean(parsed.dismissed))
-      }
-    } catch {
-      /* noop */
+    const snap = readOnboardingSnapshot(userId)
+    if (snap) {
+      setOnboardingChecks(snap.checks)
+      setOnboardingDismissed(snap.dismissed)
     }
-  }, [userId])
+  }, [userId, location.pathname])
 
   useEffect(() => {
     if (!userId) return
-    const key = `nextplay.onboarding.${userId}`
+    const key = onboardingStorageKey(userId)
     try {
       localStorage.setItem(
         key,
@@ -178,6 +174,7 @@ export default function DashboardPage() {
       }
       const created = await createLeague(input, userId)
       setCreateOpen(false)
+      setOnboardingChecks((prev) => ({ ...prev, openedLeague: true }))
       navigate(`/league/${created.id}`)
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to create league')
@@ -193,6 +190,7 @@ export default function DashboardPage() {
     try {
       const joined = await joinLeagueByInviteCode(inviteCode, userId)
       setJoinOpen(false)
+      setOnboardingChecks((prev) => ({ ...prev, openedLeague: true }))
       navigate(`/league/${joined.id}`)
     } catch (err) {
       setJoinError(err instanceof Error ? err.message : 'Failed to join league')

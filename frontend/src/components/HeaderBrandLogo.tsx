@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import combomarkSvg from '@/assets/brand/combomark-no-background.svg?raw'
+import { useAccessibilityPrefs } from '@/providers/AccessibilityProvider'
 import { useTheme } from '@/providers/ThemeProvider'
 
 function stripXmlProlog(s: string) {
@@ -12,14 +13,21 @@ function adaptSvgForLightBackground(s: string) {
 
 export default function HeaderBrandLogo() {
   const { theme } = useTheme()
+  const { prefs } = useAccessibilityPrefs()
   const raw = stripXmlProlog(combomarkSvg)
-  const svgMarkup = theme === 'light' ? adaptSvgForLightBackground(raw) : raw
+  const highContrast = prefs.contrast === 'high'
+  const svgMarkup =
+    highContrast || theme === 'light' ? adaptSvgForLightBackground(raw) : raw
 
   return (
     <Link
       to="/dashboard"
       aria-label="Go to NextPlay dashboard"
-      className="inline-flex max-w-[min(100%,200px)] items-end rounded-md px-0.5 py-0 transition hover:bg-zinc-200/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 dark:hover:bg-zinc-800/50"
+      className={`inline-flex max-w-[min(100%,200px)] items-end rounded-md px-0.5 py-0 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500/50 ${
+        highContrast
+          ? 'bg-white ring-2 ring-black hover:bg-zinc-50 dark:bg-white dark:ring-black dark:hover:bg-zinc-100'
+          : 'hover:bg-zinc-200/70 dark:hover:bg-zinc-800/50'
+      }`}
     >
       <span
         aria-hidden="true"

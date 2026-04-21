@@ -149,21 +149,8 @@ html[data-contrast='high'] [class*='border-zinc-'] {
   border-color: #000 !important;
 }
 
-html[data-contrast='high'] [class*='bg-zinc-9'] {
-  background-color: #000 !important;
-}
-
-html[data-contrast='high'] [class*='bg-zinc-8'] {
-  background-color: #111 !important;
-}
-
 html[data-contrast='high'] [class*='bg-white'] {
   background-color: #fff !important;
-}
-
-html[data-contrast='high'] [class*='bg-zinc-9'] [class*='text-zinc-'],
-html[data-contrast='high'] [class*='bg-zinc-8'] [class*='text-zinc-'] {
-  color: #fff !important;
 }
 
 html[data-contrast='high'] [class*='text-zinc-5'],
@@ -177,6 +164,25 @@ html[data-contrast='high'] [class*='text-zinc-9'] {
 html[data-contrast='high'] *:focus-visible {
   outline: 3px solid #000 !important;
   outline-offset: 2px;
+}
+
+/* Core cards: avoid “utility substring” hacks that painted panels pure black/white incorrectly */
+html[data-contrast='high'] .np-card,
+html[data-contrast='high'] .np-card-inset,
+html[data-contrast='high'] .np-card-muted,
+html[data-contrast='high'] .np-inset-sm,
+html[data-contrast='high'] .np-inset-xs {
+  background-color: #fff !important;
+  border-color: #000 !important;
+  color: #000 !important;
+  box-shadow: none !important;
+}
+
+html[data-contrast='high'] .np-card h1,
+html[data-contrast='high'] .np-card h2,
+html[data-contrast='high'] .np-card h3,
+html[data-contrast='high'] .np-card .font-display {
+  color: #000 !important;
 }
 
 code,
