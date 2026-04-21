@@ -402,7 +402,7 @@ const normalizeBaseballAthlete = (
     normalizeString(athleteRecord.position),
   );
 
-  if (!name || !team || !position) {
+  if (!name) {
     return null;
   }
 
@@ -410,8 +410,8 @@ const normalizeBaseballAthlete = (
     sport: "baseball",
     externalId: normalizeNumberString(athleteRecord.id),
     name,
-    team,
-    position,
+    team: team ?? "Unknown Team",
+    position: position ?? "UN",
     status: normalizeStatus(profile?.isActive === false ? "OUT" : "ACTIVE"),
   };
 };
