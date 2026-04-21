@@ -1,12 +1,19 @@
-const DEFAULT_API_BASE_URL = 'http://localhost:4000'
+/** Empty string = same-origin (Vite dev proxy to backend). Override for direct backend URL. */
+const DEFAULT_API_BASE_URL = ''
 
-function getApiBaseUrl() {
+export function getApiBaseUrl() {
   const configured = import.meta.env.VITE_API_BASE_URL?.trim()
-  return configured && configured.length > 0 ? configured.replace(/\/+$/, '') : DEFAULT_API_BASE_URL
+  if (configured && configured.length > 0) {
+    return configured.replace(/\/+$/, '')
+  }
+  return DEFAULT_API_BASE_URL
 }
 
 function buildUrl(path: string, query?: Record<string, string | number | undefined>) {
-  const url = new URL(`${getApiBaseUrl()}${path}`)
+  const base = getApiBaseUrl()
+  const url = base
+    ? new URL(`${base}${path}`)
+    : new URL(path, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173')
 
   if (query) {
     for (const [key, value] of Object.entries(query)) {
@@ -39,6 +46,7 @@ export async function getJson<TResponse>(
 
   try {
     response = await fetch(requestUrl, {
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
       },
@@ -49,7 +57,14 @@ export async function getJson<TResponse>(
   }
 
   const text = await response.text()
-  const body = text ? JSON.parse(text) : null
+  let body: unknown = null
+  if (text) {
+    try {
+      body = JSON.parse(text) as unknown
+    } catch {
+      body = null
+    }
+  }
 
   if (!response.ok) {
     console.error('[httpClient] http failure', requestUrl, response.status, body)
@@ -62,4 +77,48 @@ export async function getJson<TResponse>(
 
   console.log('[httpClient] success', requestUrl, body)
   return body as TResponse
+}
+
+export async function postJson<TResponse, TBody extends Record<string, unknown>>(
+  path: string,
+  body: TBody,
+): Promise<TResponse> {
+  const base = getApiBaseUrl()
+  const requestUrl = base
+    ? `${base}${path}`
+    : new URL(path, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173').toString()
+
+  const response = await fetch(requestUrl, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+
+  const text = await response.text()
+  let parsed: unknown = null
+  if (text) {
+    try {
+      parsed = JSON.parse(text) as unknown
+    } catch {
+      parsed = null
+    }
+  }
+
+  if (!response.ok) {
+    const message =
+      parsed && typeof parsed === 'object' && 'message' in parsed && typeof parsed.message === 'string'
+        ? parsed.message
+        : `Request failed with status ${response.status}`
+    throw new HttpApiError(message, response.status)
+  }
+
+  if (response.status === 204 || !text) {
+    return undefined as TResponse
+  }
+
+  return parsed as TResponse
 }

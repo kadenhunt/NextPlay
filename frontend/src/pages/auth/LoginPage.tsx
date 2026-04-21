@@ -1,6 +1,6 @@
 import type { FormEvent } from 'react'
 import { useEffect, useState } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthProvider'
 import Button from '@/components/Button'
 import FormWrapper from '@/components/FormWrapper'
@@ -8,7 +8,7 @@ import Input from '@/components/Input'
 import HeaderBrandLogo from '@/components/HeaderBrandLogo'
 
 export default function LoginPage() {
-  const { status, user, login } = useAuth()
+  const { status, login, logout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -49,10 +49,8 @@ export default function LoginPage() {
   }
 
   useEffect(() => {
-    if (status === 'authenticated' && user) {
-      navigate('/dashboard', { replace: true })
-    }
-  }, [status, user, navigate])
+    void logout()
+  }, [logout])
 
   if (status === 'loading') {
     return (
@@ -60,10 +58,6 @@ export default function LoginPage() {
         Loading...
       </div>
     )
-  }
-
-  if (status === 'authenticated') {
-    return <Navigate to="/dashboard" replace />
   }
 
   return (

@@ -65,8 +65,11 @@ export default function RootLayout({ children }: PropsWithChildren) {
   }, [leaguesQuery.data])
 
   const onLogout = () => {
-    logout()
-    navigate('/login', { replace: true })
+    void logout()
+      .catch(() => {
+        /* noop */
+      })
+      .finally(() => navigate('/login', { replace: true }))
   }
 
   useEffect(() => {

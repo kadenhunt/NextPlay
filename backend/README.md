@@ -45,7 +45,7 @@ The backend reads env values from:
 
 Required variables:
 
-- `FOOTBALL_BASKETBALL_API_KEY`
+- `FOOTBALL_BASKETBALL_API_KEY` — CollegeFootballData / related key for **MVP football** player/team data (paste into `backend/.env` only; never commit real keys).
 - `BASEBALL_API_KEY`
 - `BASEBALL_API_HOST`
 
@@ -53,6 +53,10 @@ Optional variables:
 
 - `PORT` default: `4000`
 - `NODE_ENV` default: `development`
+- `DATABASE_URL` — Postgres connection string (see repo `docker-compose` / `env_db_example`). When set together with `JWT_SECRET`, enables **real** `POST /api/auth/register`, `POST /api/auth/login`, cookie session, and `GET /api/auth/session`.
+- `JWT_SECRET` — long random string used to sign session cookies (generate once per environment).
+
+For local dev with the Vite app, keep **`VITE_API_BASE_URL` empty** in `frontend/.env` so the browser uses the **Vite proxy** (`/api` → backend); that way **httpOnly auth cookies** work on `http://localhost:5173`.
 
 ## Current Route Summary
 
@@ -115,7 +119,7 @@ These routes are early backend aliases shaped to be closer to the frontend mock 
 
 ### Placeholder only
 
-These currently return `501` and a JSON body like:
+Most non-auth routes below return `501` and a JSON body like:
 
 ```json
 {
@@ -125,11 +129,15 @@ These currently return `501` and a JSON body like:
 }
 ```
 
-Placeholder routes:
+### Auth (when `DATABASE_URL` + `JWT_SECRET` are set)
 
-- `GET /api/auth/session`
-- `POST /api/auth/login`
-- `POST /api/auth/register`
+- `GET /api/auth/session` — returns `{ user }` or `401`
+- `POST /api/auth/login` — JSON body `{ email, password }`, sets httpOnly cookie
+- `POST /api/auth/register` — JSON body `{ email, password, displayName }`, sets cookie
+- `POST /api/auth/logout` — clears cookie
+
+### Placeholder routes
+
 - `GET /api/chat/messages`
 - `POST /api/chat/messages`
 - `GET /api/draft/state`
@@ -137,6 +145,11 @@ Placeholder routes:
 - `GET /api/leagues/:leagueId`
 - `GET /api/teams`
 - `GET /api/teams/:teamId`
+
+## Fantasy league gameplay vs external data
+
+- **External APIs** (football, etc.): real college-style player/team feeds for the HTTP-wired surfaces.
+- **Your league’s draft, roster moves, and fantasy scoring between members**: still driven by the **frontend mock + `localStorage`** until league state and scoring are persisted and computed on the server. The Postgres schema under `database/` is the starting point for that phase.
 
 ## Notes
 

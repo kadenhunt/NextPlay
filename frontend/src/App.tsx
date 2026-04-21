@@ -4,6 +4,7 @@
  */
 import { Navigate, Route, Routes, BrowserRouter } from 'react-router-dom'
 import AppProviders from '@/providers/AppProviders'
+import AuthProvider from '@/providers/AuthProvider'
 import RootLayout from '@/layouts/RootLayout'
 import RequireAuthRoute from '@/router/RequireAuthRoute'
 
@@ -30,6 +31,7 @@ export default function App() {
     <AppProviders>
       <div className="flex min-h-svh w-full flex-1 flex-col">
         <BrowserRouter>
+          <AuthProvider>
           <Routes>
             <Route path="/" element={<RootLayout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
@@ -57,6 +59,7 @@ export default function App() {
               </Route>
             </Route>
           </Routes>
+          </AuthProvider>
         </BrowserRouter>
       </div>
     </AppProviders>

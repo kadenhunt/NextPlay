@@ -1,5 +1,6 @@
-import express from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
+import express from "express";
 import { authRouter } from "./routes/auth";
 import { chatRouter } from "./routes/chat";
 import { draftRouter } from "./routes/draft";
@@ -11,11 +12,12 @@ import { teamsRouter } from "./routes/teams";
 
 export const app = express();
 app.use(
-    cors({
-      origin: "http://localhost:5173",
-      credentials: true,
-    })
-  );
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  }),
+);
+app.use(cookieParser());
 app.use(express.json());
 
 app.use("/health", healthRouter);

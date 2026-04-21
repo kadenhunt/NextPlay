@@ -1,12 +1,13 @@
 # NextPlay
 
-College fantasy sports web app. **Production code today is the React frontend.** All server data is mocked in the browser so UI and types can settle before the real API exists.
+College fantasy sports web app. The app is now **hybrid**: frontend mock league logic is still used for gameplay state, while selected backend HTTP routes provide real external sports data (football first).
 
 ## Stack
 
 - **React 19**, **TypeScript**, **Vite 8**
 - **Tailwind CSS**, **TanStack Query**, **React Router**
-- Auth and persistence: **localStorage** only in mock mode
+- Auth: mock by default, optional server-backed auth behind env flags
+- Persistence: mock league state in localStorage today; Postgres schema + backend auth scaffold in repo
 
 ## Requirements
 
@@ -25,14 +26,15 @@ Run these from the **repository root** unless you prefer `cd frontend` and local
 | Production build | `npm run build` |
 | Lint | `npm run lint` |
 
-Root `package.json` forwards into `frontend/`. CI uses the same lint and build.
+Root `package.json` forwards into `frontend/`. CI now checks both frontend and backend TypeScript builds.
 
 ## Repository layout
 
 ```
 NextPlay/
 ├── frontend/          Vite app, all UI and the API seam
-├── database/          SQL and Docker notes for future backend
+├── backend/           Express + TypeScript API (external data + auth scaffold)
+├── database/          Postgres schema and Docker init
 ├── docs/              Team docs: testing plan, teammate start guide
 ├── ml/                Future stats or ML notes
 └── .github/workflows/ CI
@@ -40,7 +42,7 @@ NextPlay/
 
 ## Data and the API seam
 
-UI code imports **`frontend/src/services/api/nextplayApi.ts`**. That module currently re-exports the **mock** in `frontend/src/services/mocks/mockNextPlayApi.ts`. The swap to HTTP should stay inside that layer so pages keep stable imports.
+UI code imports **`frontend/src/services/api/nextplayApi.ts`**. That seam now supports a **hybrid mode**: mock by default, with HTTP-enabled functions for supported endpoints when env flags are set.
 
 **Why this connects cleanly:** Feature code does not import the mock file directly. Every screen goes through `nextplayApi.ts`, so the backend team can add an HTTP module with the **same exported function names and return types** and flip one re-export. Shared types live in **`types/models.ts`**, so the server contract has a single TypeScript-shaped source of truth next to a working reference implementation in the mock.
 
@@ -52,10 +54,11 @@ UI code imports **`frontend/src/services/api/nextplayApi.ts`**. That module curr
 
 Match shapes and enum strings here first, then refine behavior.
 
-## Known frontend limitations (mock mode)
+## Current MVP limitations
 
-- **Email verification:** New accounts are treated as unverified. **Resend does not send mail.** The yellow dashboard banner will stay until either **Dev mode** exposes **Mark verified (demo)** or the real backend drives verification. This is expected until mail and auth APIs exist.
-- **Password reset** on the Forgot password page is a UI stub. No email is sent.
+- **League gameplay persistence/scoring:** still mock/localStorage for league-specific draft, roster, and scoring flows.
+- **Email + password reset mail:** still stubbed (no outbound email provider wired yet).
+- **Server auth:** optional and disabled by default unless backend `DATABASE_URL` + `JWT_SECRET` and frontend `VITE_USE_SERVER_AUTH=true` are set.
 - **Dev mode** is visible to everyone in `npm run dev`. For production builds, only emails listed in **`VITE_NEXTPLAY_DEV_OWNER_EMAILS`** (comma separated, `.env` in `frontend/`) see the Dev toggle.
 
 ## Theme
@@ -69,14 +72,12 @@ Default theme is **dark**. Header basketball control and **Account → Appearanc
 | **`docs/TEAMMATE-START.md`** | Plain language onboarding, weekend backend starting point, same commands repeated |
 | **`docs/TESTING.md`** | Testing and CI roadmap, includes a plain list of test types we might add |
 
-## External APIs (reference)
+## External APIs (MVP status)
 
-College data ideas, not wired in repo as a single service yet:
-
-- Football: `https://api.collegefootballdata.com/`
-- Basketball: `https://api.collegebasketballdata.com/`
-- Baseball: ESPN core API and related feeds
+- Football/Basketball provider key path is wired in backend; football endpoints are the primary MVP target.
+- Baseball provider host/key path is wired; data completeness varies by endpoint.
+- Basketball players currently fall back to mock where upstream returns non-JSON.
 
 ## CI
 
-Workflow runs **`npm run lint`** and **`npm run build`** on pushes and PRs to `main` for `frontend/`.
+Workflow runs frontend lint/build plus backend TypeScript build on pushes and PRs to `main`.

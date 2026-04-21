@@ -1,8 +1,7 @@
-/** Global React context: query client, theme, a11y prefs, dev mode, auth. Wraps the whole app in main.tsx. */
+/** Global React context: query client, theme, a11y prefs, dev mode. Auth lives inside BrowserRouter in App.tsx. */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { PropsWithChildren } from 'react'
 import { useState } from 'react'
-import AuthProvider from './AuthProvider'
 import DevModeProvider from './DevModeProvider'
 import AccessibilityProvider from './AccessibilityProvider'
 import ThemeProvider from './ThemeProvider'
@@ -25,9 +24,7 @@ export default function AppProviders({ children }: PropsWithChildren) {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <AccessibilityProvider>
-          <DevModeProvider>
-            <AuthProvider>{children}</AuthProvider>
-          </DevModeProvider>
+          <DevModeProvider>{children}</DevModeProvider>
         </AccessibilityProvider>
       </ThemeProvider>
     </QueryClientProvider>

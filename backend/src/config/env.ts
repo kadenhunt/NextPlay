@@ -13,6 +13,9 @@ export type EnvConfig = {
   footballBasketballApiKey: string;
   baseballApiKey: string;
   baseballApiHost: string;
+  /** When set with `jwtSecret`, enables Postgres-backed auth routes. */
+  databaseUrl?: string;
+  jwtSecret?: string;
 };
 
 const allowedNodeEnvs: NodeEnv[] = ["development", "test", "production"];
@@ -55,10 +58,17 @@ const readNodeEnv = (): NodeEnv => {
   return rawNodeEnv as NodeEnv;
 };
 
+const readOptionalEnv = (name: string): string | undefined => {
+  const value = process.env[name]?.trim();
+  return value && value.length > 0 ? value : undefined;
+};
+
 export const env: EnvConfig = {
   port: readPort(),
   nodeEnv: readNodeEnv(),
   footballBasketballApiKey: readRequiredEnv("FOOTBALL_BASKETBALL_API_KEY"),
   baseballApiKey: readRequiredEnv("BASEBALL_API_KEY"),
   baseballApiHost: readRequiredEnv("BASEBALL_API_HOST"),
+  databaseUrl: readOptionalEnv("DATABASE_URL"),
+  jwtSecret: readOptionalEnv("JWT_SECRET"),
 };

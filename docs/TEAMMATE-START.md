@@ -11,12 +11,15 @@ npm run install:frontend
 npm run dev
 ```
 
-Open the URL Vite prints, usually `http://localhost:5173`. Log in with any email and password that look valid. Everything is mock data in **localStorage**.
+Open the URL Vite prints, usually `http://localhost:5173`.
+
+Default mode is still mock-friendly. You can optionally enable backend HTTP + server auth via `.env` flags.
 
 ## What “works” today
 
 - Full UI flow: register, login, dashboard, leagues, draft, team, players, matchups, standings, chat screens, settings, notifications page, account settings.
-- **Nothing hits a real server.** TanStack Query is real, but the functions behind it read and write **mock data** and **localStorage**.
+- Supported API seam calls can now hit backend routes when `VITE_USE_MOCK_API=false` (players/matchups/standings path).
+- Server auth can be enabled with `VITE_USE_SERVER_AUTH=true` + backend `DATABASE_URL` and `JWT_SECRET`.
 
 So you can demo the product shape. You cannot rely on real email, real passwords, or multi-user sync.
 
@@ -85,6 +88,25 @@ The mock file is your **sample payload workshop**. If your JSON matches it, the 
 | Lint | `npm run lint` |
 
 All from repo root. On Windows PowerShell you can paste these as-is.
+
+## Local env safety (important)
+
+- Put API keys in `backend/.env` only.
+- Never commit `.env` files.
+- Keep only examples in git: `backend/.env.example`, `frontend/.env.example`.
+
+Quick guard before push:
+
+```bash
+git status
+git diff --name-only --cached
+```
+
+If you ever see `.env` staged, unstage it:
+
+```bash
+git restore --staged backend/.env frontend/.env
+```
 
 ## Repo areas you might touch
 

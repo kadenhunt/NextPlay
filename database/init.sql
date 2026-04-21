@@ -117,3 +117,13 @@ ALTER TABLE IF EXISTS public."GameResults"
 INSERT INTO public."Sports" (sport)
 	VALUES
 	('Football'), ('Basketball'), ('Baseball');
+
+-- Account fields for server-backed auth (safe to re-run)
+ALTER TABLE public."Users" ADD COLUMN IF NOT EXISTS email VARCHAR(320);
+ALTER TABLE public."Users" ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+ALTER TABLE public."Users" ADD COLUMN IF NOT EXISTS display_name VARCHAR(256);
+ALTER TABLE public."Users" ADD COLUMN IF NOT EXISTS email_verified BOOLEAN NOT NULL DEFAULT false;
+
+CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower_unique
+    ON public."Users" (LOWER(email))
+    WHERE email IS NOT NULL;
