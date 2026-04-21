@@ -540,44 +540,47 @@ const listFootballPlayers = async (query: PlayerQuery): Promise<Player[]> => {
   }
 };
 
+const fetchBasketballRoster = async (
+  team: string | undefined,
+  season: number,
+): Promise<PlayerSeed[]> => {
+  const normalizedTeam = normalizeString(team);
+
+  if (!normalizedTeam) {
+    throw new PlayersServiceError(
+      "Basketball player provider currently requires a team filter",
+      501,
+    );
+  }
+
+  const response = await footballBasketballApiService.getBasketball<unknown>(
+    "/roster",
+    {
+      season,
+      team: normalizedTeam,
+    },
+  );
+
+  if (typeof response === "string") {
+    throw new PlayersServiceError(
+      "Basketball player provider returned unsupported roster data",
+      502,
+    );
+  }
+
+  return readArrayResponse<ExternalCollegeAthlete>(response)
+    .map((athlete) => normalizeCollegeAthlete(athlete, "basketball", season))
+    .filter((player): player is PlayerSeed => player !== null);
+};
+
 const listBasketballPlayers = async (query: PlayerQuery): Promise<Player[]> => {
   const year = query.year ?? getCurrentSeasonYear();
 
   try {
-    const rosterResponse = await footballBasketballApiService.getBasketball<
-      ExternalCollegeAthlete[]
-    >("/roster", {
-      year,
-      team: query.team,
-    });
+    const rosterResponse = await fetchBasketballRoster(query.team, year);
 
     return filterAndSortPlayers(
       rosterResponse
-        .map((athlete) => normalizeCollegeAthlete(athlete, "basketball", year))
-        .filter((player): player is PlayerSeed => player !== null)
-        .map((player) => toPlayer(player)),
-      query,
-    );
-  } catch (error) {
-    if (!normalizeString(query.search)) {
-      handleProviderError(error);
-    }
-  }
-
-  try {
-    const searchResponse = await footballBasketballApiService.getBasketball<
-      ExternalCollegeAthlete[]
-    >("/player/search", {
-      searchTerm: query.search,
-      year,
-      team: query.team,
-      position: query.position,
-    });
-
-    return filterAndSortPlayers(
-      searchResponse
-        .map((athlete) => normalizeCollegeAthlete(athlete, "basketball", year))
-        .filter((player): player is PlayerSeed => player !== null)
         .map((player) => toPlayer(player)),
       query,
     );
@@ -682,14 +685,8 @@ const refetchBasketballPlayer = async (payload: PlayerTokenPayload): Promise<Pla
   const year = payload.year ?? getCurrentSeasonYear();
 
   try {
-    const roster = await footballBasketballApiService.getBasketball<
-      ExternalCollegeAthlete[]
-    >("/roster", {
-      year,
-      team: payload.team,
-    });
+    const roster = await fetchBasketballRoster(payload.team, year);
     const exact = roster
-      .map((athlete) => normalizeCollegeAthlete(athlete, "basketball", year))
       .find(
         (player) =>
           player &&
