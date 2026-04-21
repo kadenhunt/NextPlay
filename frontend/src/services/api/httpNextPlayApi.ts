@@ -1,6 +1,10 @@
 import type { Matchup, Player, PlayerId, StandingRow, UserId } from '@/types/models'
 import type { PlayerQuery } from '@/services/mocks/mockNextPlayApi'
-import { getLeagueById as getMockLeagueById } from '@/services/mocks/mockNextPlayApi'
+import {
+  getLeagueById as getMockLeagueById,
+  getPlayerById as mockGetPlayerById,
+  getPlayers as mockGetPlayers,
+} from '@/services/mocks/mockNextPlayApi'
 import { getJson } from '@/services/api/httpClient'
 
 export * from '@/services/mocks/mockNextPlayApi'
@@ -33,6 +37,10 @@ export async function getPlayers(
     year,
   })
 
+  if (sport === 'basketball') {
+    return mockGetPlayers(leagueId, userId, query)
+  }
+
   return getJson<Player[]>(`/api/leagues/${encodeURIComponent(leagueId)}/players`, {
     userId,
     sport,
@@ -53,6 +61,10 @@ export async function getPlayerById(
 ): Promise<Player> {
   const sport = await getLeagueSport(leagueId, userId)
   console.log('[httpNextPlayApi] getPlayerById', { leagueId, userId, sport, playerId })
+
+  if (sport === 'basketball') {
+    return mockGetPlayerById(leagueId, userId, playerId)
+  }
 
   return getJson<Player>(
     `/api/leagues/${encodeURIComponent(leagueId)}/players/${encodeURIComponent(playerId)}`,
