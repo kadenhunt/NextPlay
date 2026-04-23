@@ -1,4 +1,5 @@
 import { baseballApiService } from "./baseballApiService";
+import { config } from "../config";
 import { footballBasketballApiService } from "./footballBasketballApiService";
 import type {
   ExternalBaseballAthlete,
@@ -498,6 +499,50 @@ const handleProviderError = (error: unknown): never => {
   throw new PlayersServiceError("Failed to fetch external player data", 502);
 };
 
+const basketballProviderFetch = async (
+  path: string,
+  query: Record<string, string | number>,
+): Promise<unknown> => {
+  const url = new URL(path, config.externalApis.basketball.baseUrl);
+
+  for (const [key, value] of Object.entries(query)) {
+    url.searchParams.set(key, String(value));
+  }
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: config.externalApis.basketball.headers,
+  });
+
+  const contentType = response.headers.get("content-type") ?? "unknown";
+  const text = await response.text();
+
+  if (!response.ok) {
+    throw new PlayersServiceError(
+      `Basketball player provider request failed (${response.status}) for ${url.pathname}?${url.searchParams.toString()}`,
+      502,
+    );
+  }
+
+  if (!contentType.includes("application/json")) {
+    const preview = text.slice(0, 400).replace(/\s+/g, " ").trim();
+    throw new PlayersServiceError(
+      `Basketball provider returned unsupported roster data: ${response.status} ${contentType} from ${url.pathname}?${url.searchParams.toString()} preview="${preview}"`,
+      502,
+    );
+  }
+
+  try {
+    return JSON.parse(text) as unknown;
+  } catch {
+    const preview = text.slice(0, 400).replace(/\s+/g, " ").trim();
+    throw new PlayersServiceError(
+      `Basketball provider returned invalid JSON from ${url.pathname}?${url.searchParams.toString()} preview="${preview}"`,
+      502,
+    );
+  }
+};
+
 const listFootballPlayers = async (query: PlayerQuery): Promise<Player[]> => {
   const year = query.year ?? getCurrentSeasonYear();
 
@@ -553,20 +598,10 @@ const fetchBasketballRoster = async (
     );
   }
 
-  const response = await footballBasketballApiService.getBasketball<unknown>(
-    "/roster",
-    {
-      season,
-      team: normalizedTeam,
-    },
-  );
-
-  if (typeof response === "string") {
-    throw new PlayersServiceError(
-      "Basketball player provider returned unsupported roster data",
-      502,
-    );
-  }
+  const response = await basketballProviderFetch("/roster", {
+    season,
+    team: normalizedTeam,
+  });
 
   return readArrayResponse<ExternalCollegeAthlete>(response)
     .map((athlete) => normalizeCollegeAthlete(athlete, "basketball", season))
