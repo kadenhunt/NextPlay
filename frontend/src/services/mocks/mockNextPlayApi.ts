@@ -36,6 +36,32 @@ import {
 import { isAfter, addSeconds } from 'date-fns'
 import { NEXTPLAY_DEV_MODE_STORAGE_KEY } from '@/providers/DevModeProvider'
 
+import express, { response } from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+import pkg from "pg";
+
+dotenv.config();
+const { Pool } = pkg;
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// Connection pool (reuse across requests)
+const pool = new Pool({
+  host: process.env.DB_HOST || "localhost",
+  port: Number(process.env.DB_PORT) || 5432,
+  user: process.env.DB_USER || "admin",
+  password: process.env.DB_PASSWORD, // set in .env
+  database: process.env.DB_NAME || "NextPlay",
+});
+
+const PORT = 3001;
+app.listen(PORT, () => {
+  console.log(`API running on http://localhost:${PORT}`);
+});
+
 const random = Math.random
 
 type DraftStateBase = Omit<DraftState, 'isCurrentUserTurn'>
@@ -110,15 +136,15 @@ export type LeagueAuditEvent = {
   id: string
   leagueId: LeagueId
   type:
-    | 'LEAGUE_CREATED'
-    | 'SETTINGS_UPDATED'
-    | 'INVITE_REGENERATED'
-    | 'MEMBER_ROLE_CHANGED'
-    | 'MEMBER_REMOVED'
-    | 'STATE_CHANGED'
-    | 'AUTO_PICK'
-    | 'MANUAL_PICK'
-    | 'ADD_DROP'
+  | 'LEAGUE_CREATED'
+  | 'SETTINGS_UPDATED'
+  | 'INVITE_REGENERATED'
+  | 'MEMBER_ROLE_CHANGED'
+  | 'MEMBER_REMOVED'
+  | 'STATE_CHANGED'
+  | 'AUTO_PICK'
+  | 'MANUAL_PICK'
+  | 'ADD_DROP'
   actorDisplayName: string
   message: string
   createdAt: string
@@ -821,6 +847,183 @@ export async function listMyLeagues(userId: UserId): Promise<League[]> {
     })
     .filter(Boolean) as League[]
 }
+
+app.get('/getLeagueByID/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const result = await pool.query(
+      'SELECT * FROM public."Leages" WHERE id = $1',
+      [id]
+    );
+
+    const formatted = result.rows.map(row => ({
+      id: id,
+      name: row.league_name,
+      commissioner: row.commissioner
+    }));
+
+    res.json(formatted);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/getLeagueByInviteCode/:inviteCode', async (req, res) => {
+  try {
+    const inviteCode = Number(req.params.inviteCode);
+
+    const result = await pool.query(
+      'SELECT id FROM public."Leages" WHERE id = $1',
+      [inviteCode]
+    );
+
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/getLeagueMembersByID/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+
+    const result  = await pool.query(
+      'SELECT * FROM public."UserTeams" WHERE league_id = $1',
+      [id]
+    );
+
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/createLeague/', async (req, res) => {
+  try {
+    const { name, sport, comissioner  } = req.body;
+
+    const inviteCode = `INV${Math.floor(random() * 100)}`;
+
+    const result  = await pool.query(
+      'INSERT INTO public."UserTeams" (commissioner, sport, league_name, invite_code) VALUES ($1, $2, $3, $4) RETURNING id',
+      [comissioner, sport, name, inviteCode]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/createTeam/', async (req, res) => {
+  try {
+    const { name, sport, userId, inviteCode  } = req.body;
+
+    const leagueId = (await fetch(`http://localhost:3001/getLeagueByInviteCode/${inviteCode}`)).json();
+
+    // const league_id = response[0]["id"];
+
+    const result  = await pool.query(
+      'INSERT INTO public."UserTeams" (name, sport, user_id, league_id) VALUES ($1, $2, $3, $4) RETURNING id',
+      [name, sport, userId, leagueId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/updateLeagueCommissioner/', async (req, res) => {
+  try {
+    const { userId, leagueId  } = req.body;
+
+    const result  = await pool.query(
+      'UPDATE public."Leagues" SET commissioner = $1 WHERE league_id = $2',
+      [userId, leagueId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/removeLeagueMember/', async (req, res) => {
+  try {
+    const { userId, leagueId  } = req.body;
+
+    const result  = await pool.query(
+      'DELETE FROM public."UserTeams" WHERE league_id = $1 AND user_id = $2',
+      [userId, leagueId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/updateLineup/', async (req, res) => {
+  try {
+    const { userTeamId, roster  } = req.body;
+
+    const result  = await pool.query(
+      'UPDATE public."UserTeams" SET roster = $1 WHERE id = $2',
+      [roster, userTeamId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/addPlayer/', async (req, res) => {
+  try {
+    const { name, sport, userTeamId, leagueId  } = req.body;
+
+    const result  = await pool.query(
+      'INSERT INTO public."Players" (name, sport, user_id, leagueId) VALUES ($1, $2, $3) RETURNING id',
+      [name, sport, userTeamId, leagueId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/removePlayer/', async (req, res) => {
+  try {
+    const { name, userTeamId  } = req.body;
+
+    const result  = await pool.query(
+      'DELETE FROM public."Players" WHERE name = $1 AND team_id = $2',
+      [name, userTeamId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/getTeamPlayers/:id', async (req, res) => {
+  try {
+    const inviteCode = Number(req.params.id);
+
+    const result = await pool.query(
+      'SELECT * FROM public."Players" WHERE id = $1',
+      [inviteCode]
+    );
+
+    res.json(result.rows);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export async function getLeagueById(
   leagueId: LeagueId,
