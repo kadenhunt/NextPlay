@@ -15,6 +15,22 @@ type SupportedHttpPlayerQuery = PlayerQuery & {
   year?: number
 }
 
+function hasUsableBasketballTeam(team: string | undefined) {
+  return typeof team === 'string' && team.trim().length > 0
+}
+
+function isBackendEncodedPlayerId(playerId: PlayerId) {
+  const normalized = playerId.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=')
+
+  try {
+    const decoded = atob(padded)
+    return decoded.includes('"sport"') && decoded.includes('"team"') && decoded.includes('"position"')
+  } catch {
+    return false
+  }
+}
+
 async function getLeagueSport(leagueId: string, userId: UserId) {
   const league = await getMockLeagueById(leagueId, userId)
   console.log('[httpNextPlayApi] resolved sport', { leagueId, userId, sport: league.sport })
@@ -37,7 +53,7 @@ export async function getPlayers(
     year,
   })
 
-  if (sport === 'basketball') {
+  if (sport === 'basketball' && !hasUsableBasketballTeam(query.team)) {
     return mockGetPlayers(leagueId, userId, query)
   }
 
@@ -62,7 +78,7 @@ export async function getPlayerById(
   const sport = await getLeagueSport(leagueId, userId)
   console.log('[httpNextPlayApi] getPlayerById', { leagueId, userId, sport, playerId })
 
-  if (sport === 'basketball') {
+  if (sport === 'basketball' && !isBackendEncodedPlayerId(playerId)) {
     return mockGetPlayerById(leagueId, userId, playerId)
   }
 
