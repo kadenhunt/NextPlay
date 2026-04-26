@@ -17,8 +17,24 @@ type SupportedHttpPlayerQuery = PlayerQuery & {
 
 async function getLeagueSport(leagueId: string, userId: UserId) {
   const league = await getMockLeagueById(leagueId, userId)
-  console.log('[httpNextPlayApi] resolved sport', { leagueId, userId, sport: league.sport })
   return league.sport
+}
+
+async function getLeagueContext(leagueId: string, userId: UserId) {
+  return getMockLeagueById(leagueId, userId)
+}
+
+function shouldUseMockPlayerPool(
+  sport: string,
+  query: SupportedHttpPlayerQuery,
+) {
+  if (sport === 'basketball') {
+    return true
+  }
+
+  // Draft/add-drop/team state are still mock-backed, so those flows need
+  // mock-compatible player ids rather than backend-encoded ids.
+  return sport === 'football' && query.drafted !== undefined
 }
 
 export async function getPlayers(
@@ -26,18 +42,11 @@ export async function getPlayers(
   userId: UserId,
   query: SupportedHttpPlayerQuery = {},
 ): Promise<Player[]> {
-  const sport = await getLeagueSport(leagueId, userId)
+  const league = await getLeagueContext(leagueId, userId)
+  const sport = league.sport
   const year = sport === 'football' ? query.year ?? DEFAULT_FOOTBALL_YEAR : query.year
 
-  console.log('[httpNextPlayApi] getPlayers', {
-    leagueId,
-    userId,
-    sport,
-    query,
-    year,
-  })
-
-  if (sport === 'basketball') {
+  if (shouldUseMockPlayerPool(sport, query)) {
     return mockGetPlayers(leagueId, userId, query)
   }
 
@@ -60,9 +69,8 @@ export async function getPlayerById(
   playerId: PlayerId,
 ): Promise<Player> {
   const sport = await getLeagueSport(leagueId, userId)
-  console.log('[httpNextPlayApi] getPlayerById', { leagueId, userId, sport, playerId })
 
-  if (sport === 'basketball') {
+  if (sport === 'basketball' || (sport === 'football' && playerId.startsWith('player_'))) {
     return mockGetPlayerById(leagueId, userId, playerId)
   }
 
@@ -81,12 +89,6 @@ export async function getMatchups(
   week: number,
 ): Promise<Matchup[]> {
   const league = await getMockLeagueById(leagueId, userId)
-  console.log('[httpNextPlayApi] getMatchups', {
-    leagueId,
-    userId,
-    sport: league.sport,
-    week,
-  })
 
   return getJson<Matchup[]>(`/api/leagues/${encodeURIComponent(leagueId)}/matchups`, {
     userId,
@@ -100,11 +102,6 @@ export async function getStandings(
   userId: UserId,
 ): Promise<StandingRow[]> {
   const league = await getMockLeagueById(leagueId, userId)
-  console.log('[httpNextPlayApi] getStandings', {
-    leagueId,
-    userId,
-    sport: league.sport,
-  })
 
   return getJson<StandingRow[]>(`/api/leagues/${encodeURIComponent(leagueId)}/standings`, {
     userId,

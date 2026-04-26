@@ -40,7 +40,6 @@ export async function getJson<TResponse>(
   query?: Record<string, string | number | undefined>,
 ): Promise<TResponse> {
   const requestUrl = buildUrl(path, query)
-  console.log('[httpClient] GET', requestUrl)
 
   let response: Response
 
@@ -52,7 +51,6 @@ export async function getJson<TResponse>(
       },
     })
   } catch (error) {
-    console.error('[httpClient] network failure', requestUrl, error)
     throw error
   }
 
@@ -67,7 +65,6 @@ export async function getJson<TResponse>(
   }
 
   if (!response.ok) {
-    console.error('[httpClient] http failure', requestUrl, response.status, body)
     const message =
       body && typeof body === 'object' && 'message' in body && typeof body.message === 'string'
         ? body.message
@@ -75,7 +72,6 @@ export async function getJson<TResponse>(
     throw new HttpApiError(message, response.status)
   }
 
-  console.log('[httpClient] success', requestUrl, body)
   return body as TResponse
 }
 

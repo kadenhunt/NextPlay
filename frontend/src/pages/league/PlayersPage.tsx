@@ -1,4 +1,4 @@
-import { startTransition, useEffect, useMemo, useState } from 'react'
+import { startTransition, useCallback, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { useAuth } from '@/providers/AuthProvider'
@@ -45,6 +45,8 @@ export default function PlayersPage() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [pickupBanner, setPickupBanner] = useState<string | null>(null)
   const filtersStorageKey = `nextplay.players.filters.${leagueId}.${userId ?? 'anon'}`
+  const playerFacetsQueryKey = ['playerFacets', leagueId, userId] as const
+  const playerQueryKey = ['players', leagueId, userId, search, position, team, status, drafted, sort] as const
 
   const query: PlayerQuery = useMemo(
     () => ({
@@ -80,16 +82,23 @@ export default function PlayersPage() {
   }, [filtersStorageKey, savedFilters])
 
   const facetsQuery = useQuery({
-    queryKey: ['playerFacets', leagueId, userId],
+    queryKey: playerFacetsQueryKey,
     queryFn: () => getPlayers(leagueId, userId!, { drafted: 'any', sort: 'name_asc' }),
     enabled: Boolean(leagueId && userId && league),
   })
 
   const playersQuery = useQuery({
-    queryKey: ['players', leagueId, userId, search, position, team, status, drafted, sort],
+    queryKey: playerQueryKey,
     queryFn: () => getPlayers(leagueId, userId!, query),
     enabled: Boolean(leagueId && userId && league),
   })
+
+  const players = useMemo(() => playersQuery.data ?? [], [playersQuery.data])
+
+  const selectedPlayer: Player | null = useMemo(() => {
+    if (!selectedPlayerId) return null
+    return players.find((p) => p.id === selectedPlayerId) ?? null
+  }, [players, selectedPlayerId])
 
   const insightsQuery = useQuery({
     queryKey: ['playerInsights', leagueId, userId],
@@ -97,13 +106,20 @@ export default function PlayersPage() {
     enabled: Boolean(leagueId && userId && league),
   })
 
+  const shouldFetchPlayerDetail = Boolean(
+    leagueId &&
+      userId &&
+      selectedPlayerId &&
+      detailOpen &&
+      league &&
+      !(league.sport === 'football' && selectedPlayer),
+  )
+
   const playerDetailQuery = useQuery({
     queryKey: ['player', leagueId, userId, selectedPlayerId],
     queryFn: () => getPlayerById(leagueId, userId!, selectedPlayerId!),
-    enabled: Boolean(leagueId && userId && selectedPlayerId && detailOpen && league),
+    enabled: shouldFetchPlayerDetail,
   })
-
-  const players = useMemo(() => playersQuery.data ?? [], [playersQuery.data])
 
   const positions = useMemo(() => {
     const set = new Set((facetsQuery.data ?? []).map((p) => p.position))
@@ -115,11 +131,6 @@ export default function PlayersPage() {
     return Array.from(set).sort()
   }, [facetsQuery.data])
 
-  const selectedPlayer: Player | null = useMemo(() => {
-    if (!selectedPlayerId) return null
-    return players.find((p) => p.id === selectedPlayerId) ?? null
-  }, [players, selectedPlayerId])
-
   const insightByPlayerId = useMemo(
     () => new Map((insightsQuery.data ?? []).map((i) => [i.playerId, i])),
     [insightsQuery.data],
@@ -130,23 +141,127 @@ export default function PlayersPage() {
     [players],
   )
 
-  const openDetails = (playerId: PlayerId) => {
+  const openDetails = useCallback((playerId: PlayerId) => {
     setSelectedPlayerId(playerId)
     setDetailOpen(true)
-  }
+  }, [])
+
+  const getPlayerRowId = useCallback((player: Player) => player.id, [])
 
   const addMutation = useMutation({
     mutationFn: (playerId: PlayerId) => addPlayerToMyTeam(leagueId, userId!, playerId),
-    onSuccess: async () => {
+    onSuccess: async (_teamState, playerId) => {
       setPickupBanner('Player added to your roster.')
+      queryClient.setQueryData<Player[]>(playerQueryKey, (current) =>
+        current ? current.filter((player) => player.id !== playerId) : current,
+      )
+      queryClient.setQueryData<Player[]>(playerFacetsQueryKey, (current) =>
+        current
+          ? current.map((player) =>
+              player.id === playerId ? { ...player, drafted: true } : player,
+            )
+          : current,
+      )
+      if (selectedPlayerId === playerId) {
+        queryClient.setQueryData<Player | undefined>(
+          ['player', leagueId, userId, playerId],
+          (current) => (current ? { ...current, drafted: true } : current),
+        )
+      }
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['players', leagueId] }),
         queryClient.invalidateQueries({ queryKey: ['myTeamState', leagueId] }),
         queryClient.invalidateQueries({ queryKey: ['rosterPlayers', leagueId] }),
       ])
     },
     onError: (err) => setPickupBanner(err instanceof Error ? err.message : 'Unable to add player'),
   })
+
+  const tableColumns = useMemo(
+    () => [
+      {
+        key: 'player',
+        header: 'Player',
+        render: (p: Player) => (
+          <div className="space-y-0.5">
+            <div className="font-medium">{p.name}</div>
+            <div className="text-xs text-zinc-500 dark:text-zinc-500">
+              {p.team} • {p.position}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: 'status',
+        header: 'Status',
+        render: (p: Player) => (
+          <span className="text-xs text-zinc-600 dark:text-zinc-400">{p.status}</span>
+        ),
+      },
+      {
+        key: 'proj',
+        header: 'Proj',
+        render: (p: Player) => <span className="font-mono">{p.projectedPoints}</span>,
+        className: 'whitespace-nowrap',
+      },
+      {
+        key: 'pickup',
+        header: 'Pickup',
+        render: (p: Player) =>
+          p.drafted ? (
+            <span className="text-xs text-zinc-600">Unavailable</span>
+          ) : (
+            <Button
+              type="button"
+              onClick={() => addMutation.mutate(p.id)}
+              isLoading={addMutation.isPending && addMutation.variables === p.id}
+            >
+              Add
+            </Button>
+          ),
+        className: 'whitespace-nowrap',
+      },
+      {
+        key: 'details',
+        header: 'Details',
+        render: (p: Player) => (
+          <Button type="button" variant="secondary" onClick={() => openDetails(p.id)}>
+            View
+          </Button>
+        ),
+        className: 'whitespace-nowrap',
+      },
+    ],
+    [addMutation.isPending, addMutation.mutate, addMutation.variables, openDetails],
+  )
+
+  const playersTable = useMemo(() => {
+    if (playersQuery.isLoading) {
+      return (
+        <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
+          Loading players…
+        </div>
+      )
+    }
+
+    if (playersQuery.isError) {
+      return (
+        <div className="rounded-lg border border-red-500/20 bg-red-500/[0.07] p-4 text-sm text-red-400">
+          {playersQuery.error instanceof Error ? playersQuery.error.message : 'Failed to load players.'}
+        </div>
+      )
+    }
+
+    return (
+      <Table
+        columns={tableColumns}
+        rows={players}
+        getRowId={getPlayerRowId}
+        isLoading={false}
+        error={null}
+        emptyText="No players match your filters."
+      />
+    )
+  }, [getPlayerRowId, players, playersQuery.error, playersQuery.isError, playersQuery.isLoading, tableColumns])
 
   return (
     <div className="space-y-4">
@@ -339,77 +454,7 @@ export default function PlayersPage() {
         </div>
       </div>
 
-      {playersQuery.isLoading ? (
-        <div className="np-card p-6 text-sm text-zinc-600 dark:text-zinc-400">
-          Loading players…
-        </div>
-      ) : playersQuery.isError ? (
-        <div className="rounded-lg border border-red-500/20 bg-red-500/[0.07] p-4 text-sm text-red-400">
-          {playersQuery.error instanceof Error ? playersQuery.error.message : 'Failed to load players.'}
-        </div>
-      ) : (
-        <Table
-          columns={[
-            {
-              key: 'player',
-              header: 'Player',
-              render: (p: Player) => (
-                <div className="space-y-0.5">
-                  <div className="font-medium">{p.name}</div>
-                  <div className="text-xs text-zinc-500 dark:text-zinc-500">
-                    {p.team} • {p.position}
-                  </div>
-                </div>
-              ),
-            },
-            {
-              key: 'status',
-              header: 'Status',
-              render: (p: Player) => (
-                <span className="text-xs text-zinc-600 dark:text-zinc-400">{p.status}</span>
-              ),
-            },
-            {
-              key: 'proj',
-              header: 'Proj',
-              render: (p: Player) => <span className="font-mono">{p.projectedPoints}</span>,
-              className: 'whitespace-nowrap',
-            },
-            {
-              key: 'pickup',
-              header: 'Pickup',
-              render: (p: Player) =>
-                p.drafted ? (
-                  <span className="text-xs text-zinc-600">Unavailable</span>
-                ) : (
-                  <Button
-                    type="button"
-                    onClick={() => addMutation.mutate(p.id)}
-                    isLoading={addMutation.isPending}
-                  >
-                    Add
-                  </Button>
-                ),
-              className: 'whitespace-nowrap',
-            },
-            {
-              key: 'details',
-              header: 'Details',
-              render: (p: Player) => (
-                <Button type="button" variant="secondary" onClick={() => openDetails(p.id)}>
-                  View
-                </Button>
-              ),
-              className: 'whitespace-nowrap',
-            },
-          ]}
-          rows={players}
-          getRowId={(p) => p.id}
-          isLoading={false}
-          error={null}
-          emptyText="No players match your filters."
-        />
-      )}
+      {playersTable}
 
       <Modal
         open={detailOpen}
@@ -470,5 +515,3 @@ export default function PlayersPage() {
     </div>
   )
 }
-
-
