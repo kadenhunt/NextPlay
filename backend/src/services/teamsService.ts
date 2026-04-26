@@ -1,12 +1,34 @@
-import { createNotImplementedResponse } from "../lib/notImplemented";
-import type { NotImplementedResponse } from "../types/notImplemented";
+import { leagueStore } from "../lib/leagueStore";
+import { LeagueRequestError } from "./leaguesService";
+import type { TeamSummary } from "../types/leagues";
+
+const requireUserId = (userId?: string): string => {
+  const trimmed = userId?.trim();
+  if (!trimmed) {
+    throw new LeagueRequestError("Query parameter userId is required", 400);
+  }
+
+  return trimmed;
+};
 
 export const teamsService = {
-  listTeams(): NotImplementedResponse {
-    return createNotImplementedResponse("teams", "listTeams");
+  listTeams(input: { userId?: string; leagueId?: string }): TeamSummary[] {
+    const userId = requireUserId(input.userId);
+    const leagueId = input.leagueId?.trim();
+
+    if (leagueId && !leagueStore.userHasLeagueAccess(leagueId, userId)) {
+      throw new LeagueRequestError("League not found", 404);
+    }
+
+    return leagueStore.listTeamsForUser(userId, leagueId);
   },
 
-  getTeam(): NotImplementedResponse {
-    return createNotImplementedResponse("teams", "getTeam");
+  getTeam(teamId: string, userId?: string): TeamSummary {
+    const team = leagueStore.getTeamForUser(teamId, requireUserId(userId));
+    if (!team) {
+      throw new LeagueRequestError("Team not found", 404);
+    }
+
+    return team;
   },
 };

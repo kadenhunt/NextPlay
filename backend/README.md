@@ -145,10 +145,29 @@ Most non-auth routes below return `501` and a JSON body like:
 - `GET /api/chat/messages`
 - `POST /api/chat/messages`
 - `GET /api/draft/state`
-- `GET /api/leagues`
-- `GET /api/leagues/:leagueId`
-- `GET /api/teams`
-- `GET /api/teams/:teamId`
+
+### League + Team Reads
+
+- `GET /api/leagues?userId=user_1`
+  Returns the seeded leagues that the user belongs to.
+
+- `GET /api/leagues/:leagueId?userId=user_1`
+  Returns one seeded league when the user is a member.
+
+- `GET /api/teams?userId=user_1`
+  Returns all teams across the user’s accessible seeded leagues.
+
+- `GET /api/teams?userId=user_1&leagueId=2`
+  Returns teams only for one accessible seeded league.
+
+- `GET /api/teams/:teamId?userId=user_1`
+  Returns one seeded fantasy team when the user can access its league.
+
+### Still Placeholder
+
+- `GET /api/chat/messages`
+- `POST /api/chat/messages`
+- `GET /api/draft/state`
 
 ## Fantasy league gameplay vs external data
 
