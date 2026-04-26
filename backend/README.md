@@ -169,10 +169,14 @@ Most non-auth routes below return `501` and a JSON body like:
 - `GET /api/draft/state?userId=user_1&leagueId=2`
   Returns the seeded draft state for one accessible league.
 
-### Still Placeholder
+### Chat
 
-- `GET /api/chat/messages`
+- `GET /api/chat/messages?userId=user_1&leagueId=2`
+  Returns seeded league chat messages for one accessible league.
+
 - `POST /api/chat/messages`
+  JSON body `{ "leagueId": "2", "userId": "user_1", "text": "On the clock soon." }`
+  Appends a seeded in-memory chat message and returns the updated message list.
 
 ## Fantasy league gameplay vs external data
 

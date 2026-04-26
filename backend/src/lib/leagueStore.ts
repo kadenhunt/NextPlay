@@ -7,6 +7,7 @@ import type {
   TeamSummary,
 } from "../types/leagues";
 import type { DraftState, TeamState } from "../types/draft";
+import type { ChatMessage } from "../types/chat";
 
 type LeagueSeed = {
   id: string;
@@ -18,11 +19,28 @@ type LeagueSeed = {
   teams: FantasyTeam[];
   rosterCap: number;
   draftState: Omit<DraftState, "currentTeamName" | "isCurrentUserTurn">;
+  chatMessages: ChatMessage[];
 };
 
 const now = new Date();
 const upcomingLock = new Date(now.getTime() + 1000 * 60 * 60 * 12).toISOString();
 const recentLock = new Date(now.getTime() - 1000 * 60 * 60 * 6).toISOString();
+
+const message = (
+  id: string,
+  leagueId: string,
+  userId: string,
+  displayName: string,
+  text: string,
+  createdAt: string,
+): ChatMessage => ({
+  id,
+  leagueId,
+  userId,
+  displayName,
+  text,
+  createdAt,
+});
 
 const team = (
   id: string,
@@ -77,6 +95,24 @@ const leagueSeeds: LeagueSeed[] = [
       timerEndsAt: upcomingLock,
       picks: [],
     },
+    chatMessages: [
+      message(
+        "chat_1_1",
+        "1",
+        "user_1",
+        "Kaden",
+        "Welcome to the league. Draft scheduling is almost ready.",
+        new Date(now.getTime() - 1000 * 60 * 90).toISOString(),
+      ),
+      message(
+        "chat_1_2",
+        "1",
+        "user_2",
+        "Hudson",
+        "I’m good with a Saturday draft if everyone is free.",
+        new Date(now.getTime() - 1000 * 60 * 35).toISOString(),
+      ),
+    ],
   },
   {
     id: "2",
@@ -178,6 +214,24 @@ const leagueSeeds: LeagueSeed[] = [
         },
       ],
     },
+    chatMessages: [
+      message(
+        "chat_2_1",
+        "2",
+        "user_2",
+        "Hudson",
+        "Clock is moving. Queue your next pick.",
+        new Date(now.getTime() - 1000 * 60 * 18).toISOString(),
+      ),
+      message(
+        "chat_2_2",
+        "2",
+        "user_1",
+        "Kaden",
+        "Watching the board now. Hoping a guard falls.",
+        new Date(now.getTime() - 1000 * 60 * 8).toISOString(),
+      ),
+    ],
   },
   {
     id: "3",
@@ -214,11 +268,32 @@ const leagueSeeds: LeagueSeed[] = [
       timerEndsAt: recentLock,
       picks: [],
     },
+    chatMessages: [
+      message(
+        "chat_3_1",
+        "3",
+        "user_2",
+        "Hudson",
+        "Nice start this week. Bullpen streamers paid off.",
+        new Date(now.getTime() - 1000 * 60 * 70).toISOString(),
+      ),
+      message(
+        "chat_3_2",
+        "3",
+        "user_1",
+        "Kaden",
+        "Need one more bat before the weekend series.",
+        new Date(now.getTime() - 1000 * 60 * 12).toISOString(),
+      ),
+    ],
   },
 ];
 
 const getMemberRole = (members: LeagueMember[], userId: string): LeagueRole | null =>
   members.find((member) => member.userId === userId)?.role ?? null;
+
+const getMember = (members: LeagueMember[], userId: string): LeagueMember | null =>
+  members.find((member) => member.userId === userId) ?? null;
 
 export const leagueStore = {
   listLeaguesForUser(userId: string): League[] {
@@ -340,5 +415,43 @@ export const leagueStore = {
       isLineupLocked: new Date(team.lineupLockAt).getTime() <= Date.now(),
       rosterCap: league.rosterCap,
     };
+  },
+
+  listChatMessagesForUser(leagueId: string, userId: string): ChatMessage[] | null {
+    const league = leagueSeeds.find((entry) => entry.id === leagueId);
+    if (!league || !getMemberRole(league.members, userId)) {
+      return null;
+    }
+
+    return league.chatMessages
+      .slice()
+      .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
+  },
+
+  postChatMessageForUser(leagueId: string, userId: string, text: string): ChatMessage[] | null {
+    const league = leagueSeeds.find((entry) => entry.id === leagueId);
+    if (!league) {
+      return null;
+    }
+
+    const member = getMember(league.members, userId);
+    if (!member) {
+      return null;
+    }
+
+    const nextMessage: ChatMessage = {
+      id: `chat_${leagueId}_${Date.now()}`,
+      leagueId,
+      userId,
+      displayName: member.displayName,
+      text,
+      createdAt: new Date().toISOString(),
+    };
+
+    league.chatMessages.push(nextMessage);
+
+    return league.chatMessages
+      .slice()
+      .sort((left, right) => left.createdAt.localeCompare(right.createdAt));
   },
 };
