@@ -6,6 +6,7 @@ import type {
   LeagueState,
   TeamSummary,
 } from "../types/leagues";
+import type { DraftState, TeamState } from "../types/draft";
 
 type LeagueSeed = {
   id: string;
@@ -15,6 +16,8 @@ type LeagueSeed = {
   inviteCode: string;
   members: LeagueMember[];
   teams: FantasyTeam[];
+  rosterCap: number;
+  draftState: Omit<DraftState, "currentTeamName" | "isCurrentUserTurn">;
 };
 
 const now = new Date();
@@ -61,6 +64,19 @@ const leagueSeeds: LeagueSeed[] = [
       team("1_team_5", "Red Zone Unit", "user_5", upcomingLock),
       team("1_team_6", "Gridline Kings", "user_6", upcomingLock),
     ],
+    rosterCap: 10,
+    draftState: {
+      leagueId: "1",
+      status: "DRAFT_SCHEDULED",
+      draftType: "snake",
+      currentOverallPick: 1,
+      currentRound: 1,
+      currentPickInRound: 1,
+      currentTeamId: "1_team_1",
+      autoDraftTeamIds: [],
+      timerEndsAt: upcomingLock,
+      picks: [],
+    },
   },
   {
     id: "2",
@@ -88,6 +104,80 @@ const leagueSeeds: LeagueSeed[] = [
       team("2_team_7", "Motion Unit", "user_7", upcomingLock),
       team("2_team_8", "Baseline Eight", "user_8", upcomingLock),
     ],
+    rosterCap: 10,
+    draftState: {
+      leagueId: "2",
+      status: "DRAFT_IN_PROGRESS",
+      draftType: "snake",
+      currentOverallPick: 6,
+      currentRound: 1,
+      currentPickInRound: 6,
+      currentTeamId: "2_team_6",
+      autoDraftTeamIds: ["2_team_7"],
+      timerEndsAt: new Date(now.getTime() + 1000 * 40).toISOString(),
+      picks: [
+        {
+          overallPick: 1,
+          round: 1,
+          pickInRound: 1,
+          teamId: "2_team_1",
+          playerId: "player_basketball_1",
+          teamName: "Paint Pressure",
+          playerName: "Mason Mitchell",
+          pickedByUserId: "user_1",
+          isAuto: false,
+          pickedAt: new Date(now.getTime() - 1000 * 60 * 25).toISOString(),
+        },
+        {
+          overallPick: 2,
+          round: 1,
+          pickInRound: 2,
+          teamId: "2_team_2",
+          playerId: "player_basketball_2",
+          teamName: "Full Court Flux",
+          playerName: "Jalen Carter",
+          pickedByUserId: "user_2",
+          isAuto: false,
+          pickedAt: new Date(now.getTime() - 1000 * 60 * 20).toISOString(),
+        },
+        {
+          overallPick: 3,
+          round: 1,
+          pickInRound: 3,
+          teamId: "2_team_3",
+          playerId: "player_basketball_3",
+          teamName: "Blue Arc",
+          playerName: "Ethan Reynolds",
+          pickedByUserId: "user_3",
+          isAuto: false,
+          pickedAt: new Date(now.getTime() - 1000 * 60 * 15).toISOString(),
+        },
+        {
+          overallPick: 4,
+          round: 1,
+          pickInRound: 4,
+          teamId: "2_team_4",
+          playerId: "player_basketball_4",
+          teamName: "Glass Cutters",
+          playerName: "Noah Simmons",
+          pickedByUserId: "user_4",
+          isAuto: false,
+          pickedAt: new Date(now.getTime() - 1000 * 60 * 10).toISOString(),
+        },
+        {
+          overallPick: 5,
+          round: 1,
+          pickInRound: 5,
+          teamId: "2_team_5",
+          playerId: "player_basketball_5",
+          teamName: "Tempo North",
+          playerName: "Xavier Brooks",
+          pickedByUserId: "user_5",
+          isAuto: false,
+          pickedAt: new Date(now.getTime() - 1000 * 60 * 5).toISOString(),
+        },
+      ],
+    },
   },
   {
     id: "3",
@@ -111,6 +201,19 @@ const leagueSeeds: LeagueSeed[] = [
       team("3_team_5", "Southpaw Signals", "user_5", recentLock),
       team("3_team_6", "Night Game Nine", "user_6", recentLock),
     ],
+    rosterCap: 10,
+    draftState: {
+      leagueId: "3",
+      status: "COMPLETE",
+      draftType: "snake",
+      currentOverallPick: 25,
+      currentRound: 5,
+      currentPickInRound: 1,
+      currentTeamId: "3_team_1",
+      autoDraftTeamIds: [],
+      timerEndsAt: recentLock,
+      picks: [],
+    },
   },
 ];
 
@@ -199,5 +302,43 @@ export const leagueStore = {
 
     return null;
   },
-};
 
+  getDraftStateForUser(leagueId: string, userId: string): DraftState | null {
+    const league = leagueSeeds.find((entry) => entry.id === leagueId);
+    if (!league || !getMemberRole(league.members, userId)) {
+      return null;
+    }
+
+    const currentTeam = league.teams.find((entry) => entry.id === league.draftState.currentTeamId);
+    if (!currentTeam) {
+      return null;
+    }
+
+    return {
+      ...league.draftState,
+      currentTeamName: currentTeam.name,
+      isCurrentUserTurn:
+        league.draftState.status === "DRAFT_IN_PROGRESS" &&
+        currentTeam.ownerUserId === userId,
+    };
+  },
+
+  getMyTeamStateForUser(leagueId: string, userId: string): TeamState | null {
+    const league = leagueSeeds.find((entry) => entry.id === leagueId);
+    if (!league || !getMemberRole(league.members, userId)) {
+      return null;
+    }
+
+    const team = league.teams.find((entry) => entry.ownerUserId === userId);
+    if (!team) {
+      return null;
+    }
+
+    return {
+      leagueId: league.id,
+      team,
+      isLineupLocked: new Date(team.lineupLockAt).getTime() <= Date.now(),
+      rosterCap: league.rosterCap,
+    };
+  },
+};

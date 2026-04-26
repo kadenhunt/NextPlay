@@ -25,6 +25,19 @@ export const listTeams = (request: Request, response: Response): void => {
   }
 };
 
+export const getMyTeamState = (request: Request, response: Response): void => {
+  try {
+    const userId =
+      typeof request.query.userId === "string" ? request.query.userId : undefined;
+    const leagueId =
+      typeof request.query.leagueId === "string" ? request.query.leagueId : undefined;
+
+    response.status(200).json(teamsService.getMyTeamState({ userId, leagueId }));
+  } catch (error) {
+    sendError(response, error);
+  }
+};
+
 export const getTeam = (request: Request, response: Response): void => {
   try {
     const userId =

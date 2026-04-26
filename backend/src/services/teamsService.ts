@@ -1,5 +1,6 @@
 import { leagueStore } from "../lib/leagueStore";
 import { LeagueRequestError } from "./leaguesService";
+import type { TeamState } from "../types/draft";
 import type { TeamSummary } from "../types/leagues";
 
 const requireUserId = (userId?: string): string => {
@@ -30,5 +31,21 @@ export const teamsService = {
     }
 
     return team;
+  },
+
+  getMyTeamState(input: { leagueId?: string; userId?: string }): TeamState {
+    const userId = requireUserId(input.userId);
+    const leagueId = input.leagueId?.trim();
+
+    if (!leagueId) {
+      throw new LeagueRequestError("Query parameter leagueId is required", 400);
+    }
+
+    const teamState = leagueStore.getMyTeamStateForUser(leagueId, userId);
+    if (!teamState) {
+      throw new LeagueRequestError("Team state not found", 404);
+    }
+
+    return teamState;
   },
 };
