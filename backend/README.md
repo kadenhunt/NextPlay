@@ -56,7 +56,11 @@ Optional variables:
 - `DATABASE_URL` — Postgres connection string (see repo `docker-compose` / `env_db_example`). When set together with `JWT_SECRET`, enables **real** `POST /api/auth/register`, `POST /api/auth/login`, cookie session, and `GET /api/auth/session`.
 - `JWT_SECRET` — long random string used to sign session cookies (generate once per environment).
 
+`DATABASE_URL` and `JWT_SECRET` must either both be set or both be omitted. The server now fails fast on startup if only one is provided.
+
 For local dev with the Vite app, keep **`VITE_API_BASE_URL` empty** in `frontend/.env` so the browser uses the **Vite proxy** (`/api` → backend); that way **httpOnly auth cookies** work on `http://localhost:5173`.
+
+To initialize auth storage locally, run the schema in [database/init.sql](/Users/ahmadjawidkarimi/NextPlay/database/init.sql) against your Postgres database before testing register/login.
 
 ## Current Route Summary
 

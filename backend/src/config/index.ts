@@ -7,6 +7,9 @@ const jsonHeaders = {
 export const config = {
   env: env.nodeEnv,
   port: env.port,
+  auth: {
+    enabled: env.authEnabled,
+  },
   externalApis: {
     football: {
       baseUrl: "https://api.collegefootballdata.com",

@@ -5,6 +5,9 @@ const startServer = (): void => {
 
   app.listen(config.port, () => {
     console.log(`NextPlay backend listening on port ${config.port}`);
+    console.log(
+      `Auth backend is ${config.auth.enabled ? "enabled" : "disabled"}`
+    );
   });
 };
 
