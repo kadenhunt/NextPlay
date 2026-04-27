@@ -231,7 +231,7 @@ export default function PlayersPage() {
         className: 'whitespace-nowrap',
       },
     ],
-    [addMutation.isPending, addMutation.mutate, addMutation.variables, openDetails],
+    [addMutation, openDetails],
   )
 
   const playersTable = useMemo(() => {

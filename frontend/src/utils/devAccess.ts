@@ -13,8 +13,10 @@ function parseOwnerEmails(): Set<string> {
 }
 
 const ownerEmails = parseOwnerEmails()
+const DEV_MODE_LOCKED_FOR_DEMO = true
 
 export function canAccessDevModeToggle(userEmail: string | undefined): boolean {
+  if (DEV_MODE_LOCKED_FOR_DEMO) return false
   if (import.meta.env.DEV) return true
   if (!userEmail) return false
   return ownerEmails.has(userEmail.trim().toLowerCase())

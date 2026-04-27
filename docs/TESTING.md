@@ -6,6 +6,17 @@ This matches the root **README**: frontend today, mock adapter, SQL under `datab
 
 ---
 
+## Revision log
+
+| Date | Version | Owner | Rationale |
+|------|---------|-------|-----------|
+| 2026-04-09 | 1.0 | Team | Established initial testing baseline and CI scope for first submission. |
+| 2026-04-16 | 1.1 | Team | Expanded testing categories to include integration, security, accessibility, and performance planning. |
+| 2026-04-20 | 1.2 | Team | Updated CI references to include backend TypeScript build and clarified frontend/backend test ownership. |
+| 2026-04-25 | 1.3 | Team | Added deeper execution detail in preparation for final deliverables and aligned testing scope with current MVP implementation. |
+
+---
+
 ## Kinds of tests we might add (plain names)
 
 | Kind | What it means | Example in this project |

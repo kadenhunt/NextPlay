@@ -58,9 +58,13 @@ Optional variables:
 
 `DATABASE_URL` and `JWT_SECRET` must either both be set or both be omitted. The server now fails fast on startup if only one is provided.
 
-For local dev with the Vite app, keep **`VITE_API_BASE_URL` empty** in `frontend/.env` so the browser uses the **Vite proxy** (`/api` → backend); that way **httpOnly auth cookies** work on `http://localhost:5173`.
+For local dev with the Vite app, keep **`VITE_API_BASE_URL` empty** in `frontend/.env` so the browser uses the **Vite proxy** (`/api` → backend); that way **httpOnly auth cookies** work on localhost.
 
-To initialize auth storage locally, run the schema in [database/init.sql](/Users/ahmadjawidkarimi/NextPlay/database/init.sql) against your Postgres database before testing register/login.
+To initialize auth storage locally:
+
+1. Start Docker Desktop
+2. From repo root run: `docker compose up -d postgres`
+3. Apply schema from `database/init.sql` to your Postgres database
 
 ## Current Route Summary
 

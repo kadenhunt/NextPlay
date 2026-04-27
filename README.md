@@ -61,6 +61,27 @@ Match shapes and enum strings here first, then refine behavior.
 - **Server auth:** optional and disabled by default unless backend `DATABASE_URL` + `JWT_SECRET` and frontend `VITE_USE_SERVER_AUTH=true` are set.
 - **Dev mode** is visible to everyone in `npm run dev`. For production builds, only emails listed in **`VITE_NEXTPLAY_DEV_OWNER_EMAILS`** (comma separated, `.env` in `frontend/`) see the Dev toggle.
 
+## Demo runbook (final week)
+
+Use one of these two predictable modes:
+
+1. **Stable seeded demo mode (recommended for live class demo)**
+   - `frontend/.env`: `VITE_USE_MOCK_API=true`
+   - Auth can still be server-backed if desired: `VITE_USE_SERVER_AUTH=true`
+   - Best for consistent league/draft/team state and reduced demo risk.
+
+2. **Backend data mode (for integration proof)**
+   - `frontend/.env`: `VITE_USE_MOCK_API=false`
+   - Uses HTTP adapter for supported seam functions (`getPlayers`, `getPlayerById`, `getMatchups`, `getStandings`).
+
+### Local auth prerequisites
+
+- Start Docker Desktop
+- From repo root: `docker compose up -d postgres`
+- Initialize schema: `database/init.sql` into Postgres
+- In `backend/.env`, set `DATABASE_URL` and `JWT_SECRET`
+- In `frontend/.env`, set `VITE_USE_SERVER_AUTH=true`
+
 ## Theme
 
 Default theme is **dark**. Header basketball control and **Account → Appearance** toggle light and dark. Preference is stored in the browser.

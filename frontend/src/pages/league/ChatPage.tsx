@@ -112,7 +112,7 @@ export default function ChatPage() {
             </label>
             <textarea
               id="chatText"
-              className="min-h-[92px] w-full resize-y rounded-xl border border-zinc-700/60 bg-zinc-900/80 px-3 py-2 text-sm text-zinc-900 dark:text-zinc-100 outline-none transition focus:border-red-500/60"
+              className="min-h-[92px] w-full resize-y rounded-xl border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 outline-none transition focus:border-red-500/60 dark:border-zinc-700/60 dark:bg-zinc-900/80 dark:text-zinc-100"
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Type your message…"

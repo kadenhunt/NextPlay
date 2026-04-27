@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/providers/AuthProvider'
 import { useDevMode } from '@/providers/DevModeProvider'
@@ -14,13 +14,16 @@ import Button from '@/components/Button'
 import Input from '@/components/Input'
 import Modal from '@/components/Modal'
 import StatusBadge from '@/components/StatusBadge'
-import { onboardingStorageKey, readOnboardingSnapshot } from '@/utils/onboardingStorage'
+import {
+  markOnboardingOpenedLeague,
+  onboardingStorageKey,
+  readOnboardingSnapshot,
+} from '@/utils/onboardingStorage'
 
 export default function DashboardPage() {
   const navigate = useNavigate()
-  const location = useLocation()
   const queryClient = useQueryClient()
-  const { user, emailVerified, resendVerificationEmail, markEmailVerifiedForDemo } = useAuth()
+  const { user } = useAuth()
   const { devMode } = useDevMode()
 
   const userId = user?.id
@@ -47,6 +50,9 @@ export default function DashboardPage() {
   const [createInviteCode, setCreateInviteCode] = useState('')
   const [onboardingDismissed, setOnboardingDismissed] = useState(false)
   const [onboardingChecks, setOnboardingChecks] = useState<Record<string, boolean>>({})
+  const [onboardingVisible, setOnboardingVisible] = useState(false)
+  const [onboardingFading, setOnboardingFading] = useState(false)
+  const [leagueCardsLift, setLeagueCardsLift] = useState(false)
 
   const [inviteCode, setInviteCode] = useState('')
 
@@ -70,10 +76,20 @@ export default function DashboardPage() {
     if (!userId) return
     const snap = readOnboardingSnapshot(userId)
     if (snap) {
-      setOnboardingChecks(snap.checks)
+      const hasOpenedLeagueFromHistory = Boolean(localStorage.getItem('nextplay.demo.lastLeagueId'))
+      setOnboardingChecks((prev) => ({
+        ...prev,
+        ...snap.checks,
+        ...(hasOpenedLeagueFromHistory ? { openedLeague: true } : {}),
+      }))
       setOnboardingDismissed(snap.dismissed)
+      return
     }
-  }, [userId, location.pathname])
+    const hasOpenedLeagueFromHistory = Boolean(localStorage.getItem('nextplay.demo.lastLeagueId'))
+    if (hasOpenedLeagueFromHistory) {
+      setOnboardingChecks((prev) => ({ ...prev, openedLeague: true }))
+    }
+  }, [userId])
 
   useEffect(() => {
     if (!userId) return
@@ -98,29 +114,12 @@ export default function DashboardPage() {
   }, [leagueCards.length])
 
   useEffect(() => {
-    if (emailVerified) {
-      setOnboardingChecks((prev) => ({ ...prev, verifiedEmail: true }))
-    }
-  }, [emailVerified])
-
-  useEffect(() => {
     if ((user?.displayName ?? '').trim().length >= 2) {
       setOnboardingChecks((prev) => ({ ...prev, updatedProfile: true }))
     }
   }, [user?.displayName])
 
   const checklistItems = [
-    {
-      key: 'verifiedEmail',
-      label: 'Verify your email',
-      done: Boolean(onboardingChecks.verifiedEmail),
-      cta: 'Verify',
-      action: () => {
-        if (!emailVerified) {
-          void resendVerificationEmail()
-        }
-      },
-    },
     {
       key: 'joinedLeague',
       label: 'Join or create your first league',
@@ -135,10 +134,10 @@ export default function DashboardPage() {
       cta: 'Open league',
       action: () => {
         const firstLeague = leagueCards[0]
-        if (firstLeague) {
-          setOnboardingChecks((prev) => ({ ...prev, openedLeague: true }))
-          navigate(`/league/${firstLeague.id}`)
-        }
+        if (!firstLeague || !userId) return
+        markOnboardingOpenedLeague(userId)
+        setOnboardingChecks((prev) => ({ ...prev, openedLeague: true }))
+        navigate(`/league/${firstLeague.id}`)
       },
     },
     {
@@ -150,7 +149,38 @@ export default function DashboardPage() {
     },
   ]
   const checklistDoneCount = checklistItems.filter((i) => i.done).length
-  const showOnboarding = !onboardingDismissed && checklistDoneCount < checklistItems.length
+  const checklistComplete = checklistDoneCount >= checklistItems.length
+  const shouldShowOnboarding = !onboardingDismissed && !checklistComplete
+
+  useEffect(() => {
+    if (!checklistComplete || onboardingDismissed) return
+    // Persist completion so checklist does not come back on later dashboard visits.
+    setOnboardingDismissed(true)
+  }, [checklistComplete, onboardingDismissed])
+
+  useEffect(() => {
+    if (shouldShowOnboarding) {
+      setOnboardingVisible(true)
+      setOnboardingFading(false)
+      return
+    }
+
+    if (!onboardingVisible) return
+
+    setOnboardingFading(true)
+    setLeagueCardsLift(true)
+    const fadeTimer = window.setTimeout(() => {
+      setOnboardingVisible(false)
+      setOnboardingFading(false)
+    }, 360)
+    const liftTimer = window.setTimeout(() => {
+      setLeagueCardsLift(false)
+    }, 700)
+    return () => {
+      window.clearTimeout(fadeTimer)
+      window.clearTimeout(liftTimer)
+    }
+  }, [onboardingVisible, shouldShowOnboarding])
 
   const roleLabel = (role: string) =>
     role === 'COMMISSIONER' ? 'Commissioner' : 'Member'
@@ -174,6 +204,7 @@ export default function DashboardPage() {
       }
       const created = await createLeague(input, userId)
       setCreateOpen(false)
+      markOnboardingOpenedLeague(userId)
       setOnboardingChecks((prev) => ({ ...prev, openedLeague: true }))
       navigate(`/league/${created.id}`)
     } catch (err) {
@@ -190,6 +221,7 @@ export default function DashboardPage() {
     try {
       const joined = await joinLeagueByInviteCode(inviteCode, userId)
       setJoinOpen(false)
+      markOnboardingOpenedLeague(userId)
       setOnboardingChecks((prev) => ({ ...prev, openedLeague: true }))
       navigate(`/league/${joined.id}`)
     } catch (err) {
@@ -201,34 +233,6 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-5">
-      {!emailVerified ? (
-        <div className="rounded-xl border border-amber-300/70 bg-amber-50 p-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm text-amber-900">
-              Verify your email to secure your account and receive league alerts.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                variant="secondary"
-                className="border-amber-300 bg-white text-amber-900 hover:border-amber-400 hover:bg-amber-100"
-                onClick={() => void resendVerificationEmail()}
-              >
-                Resend verification
-              </Button>
-              {devMode ? (
-                <Button
-                  variant="secondary"
-                  className="border-amber-300 bg-white text-amber-900 hover:border-amber-400 hover:bg-amber-100"
-                  onClick={markEmailVerifiedForDemo}
-                >
-                  Mark verified (dev)
-                </Button>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       {/* Hero */}
       <div className="sporty-card relative overflow-hidden np-card p-6">
         <div className="pointer-events-none absolute -right-24 -top-24 h-64 w-64 rounded-full bg-red-500/[0.04] blur-3xl" />
@@ -285,8 +289,13 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {showOnboarding ? (
-        <section className="np-card p-5">
+      {onboardingVisible ? (
+        <section
+          className={[
+            'np-card p-5 transition-all duration-300 ease-out',
+            onboardingFading ? '-translate-y-1 opacity-0' : 'translate-y-0 opacity-100',
+          ].join(' ')}
+        >
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-base font-semibold tracking-wide text-zinc-900 dark:text-zinc-100">
@@ -372,12 +381,20 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+        <div
+          className={[
+            'grid gap-4 transition-all duration-500 ease-out sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4',
+            leagueCardsLift ? '-translate-y-1 opacity-100' : 'translate-y-0 opacity-100',
+          ].join(' ')}
+        >
           {leagueCards.map((l) => (
             <button
               key={l.id}
               type="button"
               onClick={() => {
+                if (userId) {
+                  markOnboardingOpenedLeague(userId)
+                }
                 setOnboardingChecks((prev) => ({ ...prev, openedLeague: true }))
                 navigate(`/league/${l.id}`)
               }}

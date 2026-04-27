@@ -41,18 +41,12 @@ export async function getJson<TResponse>(
 ): Promise<TResponse> {
   const requestUrl = buildUrl(path, query)
 
-  let response: Response
-
-  try {
-    response = await fetch(requestUrl, {
-      credentials: 'include',
-      headers: {
-        Accept: 'application/json',
-      },
-    })
-  } catch (error) {
-    throw error
-  }
+  const response = await fetch(requestUrl, {
+    credentials: 'include',
+    headers: {
+      Accept: 'application/json',
+    },
+  })
 
   const text = await response.text()
   let body: unknown = null

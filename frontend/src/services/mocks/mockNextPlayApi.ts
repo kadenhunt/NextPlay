@@ -149,7 +149,7 @@ export type TickerItem = {
   label: string
 }
 
-const STORAGE_KEY = 'nextplay.mock.db.v3'
+const STORAGE_KEY = 'nextplay.mock.db.v6'
 
 function safeNowIso(): string {
   return new Date().toISOString()
@@ -223,6 +223,91 @@ function buildSnakeDraftOrder(teamIds: TeamId[], totalPicks: number): TeamId[] {
   return order
 }
 
+type SeedProspect = {
+  name: string
+  position: string
+  school: string
+}
+
+const curatedPlayersBySport: Partial<Record<Sport, SeedProspect[]>> = {
+  baseball: [
+    { name: 'Roch Cholowsky', position: 'SS', school: 'UCLA' },
+    { name: 'Grady Emerson', position: 'SS', school: 'Fort Worth Christian' },
+    { name: 'Justin Lebron', position: 'SS', school: 'Alabama' },
+    { name: 'Jackson Flora', position: 'RHP', school: 'UC Santa Barbara' },
+    { name: 'Jacob Lombard', position: 'SS', school: 'Gulliver Schools' },
+    { name: 'Drew Burress', position: 'OF', school: 'Georgia Tech' },
+    { name: 'Vahn Lackey', position: 'C', school: 'Georgia Tech' },
+    { name: 'AJ Gracia', position: 'OF', school: 'Virginia' },
+    { name: 'Ace Reese', position: '3B', school: 'Mississippi State' },
+    { name: 'Eric Booth Jr.', position: 'OF', school: 'Oak Grove' },
+    { name: 'Sawyer Strosnider', position: 'OF', school: 'TCU' },
+    { name: 'Gio Rojas', position: 'LHP', school: 'Marjory Stoneman Douglas' },
+    { name: 'Tyler Bell', position: 'SS', school: 'Kentucky' },
+    { name: 'Carson Bolemon', position: 'LHP', school: 'Southside Christian Schools' },
+    { name: 'Eric Becker', position: 'SS', school: 'Virginia' },
+    { name: 'Cameron Flukey', position: 'RHP', school: 'Coastal Carolina' },
+    { name: 'Chris Hacopian', position: 'SS', school: 'Texas A&M' },
+    { name: 'Liam Peterson', position: 'RHP', school: 'Florida' },
+    { name: 'Caden Sorrell', position: 'OF', school: 'Texas A&M' },
+    { name: 'Tyler Spangler', position: 'SS', school: 'De La Salle' },
+    { name: 'Blake Bowen', position: 'OF', school: 'JSerra Catholic' },
+    { name: 'Logan Schmidt', position: 'LHP', school: 'Ganesha' },
+    { name: 'Will Brick', position: 'C', school: 'Christian Brothers' },
+    { name: 'Tegan Kuhns', position: 'RHP', school: 'Tennessee' },
+    { name: 'Chris Rembert', position: 'IF/OF', school: 'Auburn' },
+    { name: 'Ryder Helfrick', position: 'C', school: 'Arkansas' },
+    { name: 'James Clark', position: 'SS', school: 'St. John Bosco' },
+    { name: 'Gabe Gaeckle', position: 'RHP', school: 'Arkansas' },
+    { name: 'Cole Carlon', position: 'LHP', school: 'Arizona State' },
+    { name: 'Jensen Hirschkorn', position: 'RHP', school: 'Kingsburg' },
+    { name: 'Mason Edwards', position: 'LHP', school: 'USC' },
+    { name: 'Chase Brunson', position: 'OF', school: 'TCU' },
+    { name: 'Jake Brown', position: 'OF', school: 'LSU' },
+    { name: 'Aiden Robbins', position: 'OF', school: 'Texas' },
+    { name: 'Brady Harris', position: 'OF', school: 'Trinity Christian Academy' },
+    { name: 'Lucas Moore', position: 'OF', school: 'Louisville' },
+  ],
+  football: [
+    { name: 'Fernando Mendoza', position: 'QB', school: 'Indiana' },
+    { name: 'Rueben Bain Jr.', position: 'DL', school: 'Miami' },
+    { name: 'David Bailey', position: 'OLB', school: 'Texas Tech' },
+    { name: 'Jacob Rodriguez', position: 'LB', school: 'Texas Tech' },
+    { name: 'Caleb Downs', position: 'DB', school: 'Ohio State' },
+    { name: 'Jeremiyah Love', position: 'RB', school: 'Notre Dame' },
+    { name: 'Trinidad Chambliss', position: 'QB', school: 'Ole Miss' },
+    { name: 'Jeremiah Smith', position: 'WR', school: 'Ohio State' },
+    { name: 'Diego Pavia', position: 'QB', school: 'Vanderbilt' },
+    { name: 'Cashius Howell', position: 'DL', school: 'Texas A&M' },
+    { name: 'Spencer Fano', position: 'OL', school: 'Utah' },
+    { name: 'Francis Mauigoa', position: 'OL', school: 'Miami' },
+    { name: 'Makai Lemon', position: 'WR', school: 'USC' },
+    { name: 'Kayden McDonald', position: 'DL', school: 'Ohio State' },
+    { name: 'Leonard Moore', position: 'CB', school: 'Notre Dame' },
+    { name: 'Dangelo Ponds', position: 'CB', school: 'Indiana' },
+    { name: 'Arvell Reese', position: 'LB', school: 'Ohio State' },
+    { name: 'Carter Smith', position: 'OT', school: 'Indiana' },
+    { name: 'Ahmad Hardy', position: 'RB', school: 'Missouri' },
+    { name: 'Kewan Lacy', position: 'RB', school: 'Ole Miss' },
+    { name: 'KC Concepcion', position: 'WR', school: 'Texas A&M' },
+    { name: 'Lee Hunter', position: 'DT', school: 'Texas Tech' },
+    { name: 'Julian Sayin', position: 'QB', school: 'Ohio State' },
+    { name: 'Dante Moore', position: 'QB', school: 'Oregon' },
+    { name: 'CJ Allen', position: 'LB', school: 'Georgia' },
+    { name: 'Malachi Toney', position: 'WR', school: 'Miami' },
+    { name: 'Mansoor Delane', position: 'CB', school: 'LSU' },
+    { name: 'Akheem Mesidor', position: 'DE', school: 'Miami' },
+    { name: 'Aiden Fisher', position: 'LB', school: 'Indiana' },
+    { name: 'Brice Pollock', position: 'DB', school: 'Texas Tech' },
+    { name: 'Colin Simmons', position: 'DE', school: 'Texas' },
+    { name: 'Bishop Fitzgerald', position: 'S', school: 'USC' },
+    { name: 'Eli Stowers', position: 'TE', school: 'Vanderbilt' },
+    { name: 'Logan Jones', position: 'C', school: 'Iowa' },
+    { name: 'Skyler Bell', position: 'WR', school: 'UConn' },
+    { name: 'Chris Johnson', position: 'CB', school: 'San Diego State' },
+  ],
+}
+
 function seedPlayers(sport: Sport, totalPlayers: number): Player[] {
   const positionsBySport: Record<Sport, string[]> = {
     football: ['QB', 'RB', 'WR', 'TE', 'K', 'DL', 'LB', 'DB'],
@@ -281,7 +366,32 @@ function seedPlayers(sport: Sport, totalPlayers: number): Player[] {
   ]
 
   const players: Player[] = []
-  for (let i = 0; i < totalPlayers; i++) {
+  const curated = curatedPlayersBySport[sport] ?? []
+  const seen = new Set<string>()
+  let seedIndex = 0
+
+  for (let i = 0; i < curated.length && players.length < totalPlayers; i++) {
+    const item = curated[i]!
+    const dedupeKey = `${item.name}|${item.position}|${item.school}`
+    if (seen.has(dedupeKey)) continue
+    seen.add(dedupeKey)
+    const status = statuses[(seedIndex * 7) % statuses.length]
+    const id = makeId('player', `${sport}_${item.name}_${item.position}_${item.school}_${seedIndex}`)
+    players.push({
+      id,
+      name: item.name,
+      position: item.position,
+      team: item.school,
+      status,
+      drafted: false,
+      projectedPoints:
+        8 + ((seedIndex * 19) % 42) + (sport === 'football' ? 8 : sport === 'basketball' ? 11 : 6),
+    })
+    seedIndex += 1
+  }
+
+  while (players.length < totalPlayers) {
+    const i = players.length
     const position = positions[i % positions.length]
     const team = teams[i % teams.length]
     const status = statuses[(i * 7) % statuses.length]
@@ -379,7 +489,6 @@ function buildInitialDb(): MockDb {
 
   const league1Id: LeagueId = '1'
   const league2Id: LeagueId = '2'
-  const league3Id: LeagueId = '3'
 
   const league1Members: LeagueMember[] = [
     { userId: userMember, role: LeagueRoleValues.COMMISSIONER, displayName: 'Kaden' },
@@ -391,23 +500,14 @@ function buildInitialDb(): MockDb {
   ]
 
   const league2Members: LeagueMember[] = [
-    { userId: userMember, role: LeagueRoleValues.MEMBER, displayName: 'Kaden' },
-    { userId: userOtherA, role: LeagueRoleValues.COMMISSIONER, displayName: 'Hudson' },
+    { userId: userMember, role: LeagueRoleValues.COMMISSIONER, displayName: 'Kaden' },
+    { userId: userOtherA, role: LeagueRoleValues.MEMBER, displayName: 'Hudson' },
     { userId: userOtherB, role: LeagueRoleValues.MEMBER, displayName: 'Ahmad' },
     { userId: userOtherC, role: LeagueRoleValues.MEMBER, displayName: 'Fardeen' },
     { userId: userOtherD, role: LeagueRoleValues.MEMBER, displayName: 'Maya' },
     { userId: userOtherE, role: LeagueRoleValues.MEMBER, displayName: 'Khalil' },
     { userId: userOtherF, role: LeagueRoleValues.MEMBER, displayName: 'Jace' },
     { userId: userOtherG, role: LeagueRoleValues.MEMBER, displayName: 'Riley' },
-  ]
-
-  const league3Members: LeagueMember[] = [
-    { userId: userMember, role: LeagueRoleValues.MEMBER, displayName: 'Kaden' },
-    { userId: userOtherA, role: LeagueRoleValues.COMMISSIONER, displayName: 'Hudson' },
-    { userId: userOtherB, role: LeagueRoleValues.MEMBER, displayName: 'Ahmad' },
-    { userId: userOtherC, role: LeagueRoleValues.MEMBER, displayName: 'Fardeen' },
-    { userId: userOtherD, role: LeagueRoleValues.MEMBER, displayName: 'Maya' },
-    { userId: userOtherE, role: LeagueRoleValues.MEMBER, displayName: 'Khalil' },
   ]
 
   const league1Teams = seedTeams([
@@ -420,34 +520,37 @@ function buildInitialDb(): MockDb {
   ])
 
   const league2Teams = seedTeams([
-    { teamName: 'Paint Pressure', ownerUserId: userMember },
-    { teamName: 'Full Court Flux', ownerUserId: userOtherA },
-    { teamName: 'Blue Arc', ownerUserId: userOtherB },
-    { teamName: 'Glass Cutters', ownerUserId: userOtherC },
-    { teamName: 'Tempo North', ownerUserId: userOtherD },
-    { teamName: 'Rim Theory', ownerUserId: userOtherE },
-    { teamName: 'Motion Unit', ownerUserId: userOtherF },
-    { teamName: 'Baseline Eight', ownerUserId: userOtherG },
-  ])
-
-  const league3Teams = seedTeams([
-    { teamName: 'Diamond Shift', ownerUserId: userMember },
-    { teamName: 'Bullpen Labs', ownerUserId: userOtherA },
-    { teamName: 'Left Field Noise', ownerUserId: userOtherB },
-    { teamName: 'Line Drive Club', ownerUserId: userOtherC },
-    { teamName: 'Southpaw Signals', ownerUserId: userOtherD },
-    { teamName: 'Night Game Nine', ownerUserId: userOtherE },
+    { teamName: 'Prime Blitz', ownerUserId: userMember },
+    { teamName: 'Goal Line Crew', ownerUserId: userOtherA },
+    { teamName: 'Deep Route Co.', ownerUserId: userOtherB },
+    { teamName: 'Pocket Pressure', ownerUserId: userOtherC },
+    { teamName: 'Red Zone Bandits', ownerUserId: userOtherD },
+    { teamName: 'Huddle Unit', ownerUserId: userOtherE },
+    { teamName: 'End Zone Syndicate', ownerUserId: userOtherF },
+    { teamName: 'Two Minute Drive', ownerUserId: userOtherG },
   ])
 
   const basePlayers1 = seedPlayers('football', 84)
-  const basePlayers2 = seedPlayers('basketball', 96)
-  const basePlayers3 = seedPlayers('baseball', 90)
+  const basePlayers2 = seedPlayers('football', 90)
 
-  // League 2: Draft in progress (some picks already made)
-  const draftOrder2 = buildSnakeDraftOrder(league2Teams.map((t) => t.id), 32)
+  const league1DraftBase: DraftStateBase = {
+    leagueId: league1Id,
+    status: LeagueStateValues.DRAFT_SCHEDULED,
+    draftType: 'snake',
+    currentOverallPick: 1,
+    currentRound: 1,
+    currentPickInRound: 1,
+    currentTeamId: league1Teams[0]!.id,
+    currentTeamName: league1Teams[0]!.name,
+    autoDraftTeamIds: [],
+    timerEndsAt: addSeconds(now, 1800).toISOString(),
+    picks: [],
+  }
 
+  // League 2: Season active (draft complete, rosters locked/unlocked based on lineupLockAt)
+  const draftOrder2 = buildSnakeDraftOrder(league2Teams.map((t) => t.id), 24)
   const draft2Picks: DraftPick[] = []
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 24; i++) {
     const teamId = draftOrder2[i - 1]
     const team = league2Teams.find((t) => t.id === teamId)!
     const player = basePlayers2[i - 1]
@@ -470,102 +573,44 @@ function buildInitialDb(): MockDb {
       playerName: player.name,
       pickedByUserId: team.ownerUserId,
       isAuto: false,
-      pickedAt: addSeconds(now, -3600 * (6 - i)).toISOString(),
-    })
-  }
-
-  const league1DraftBase: DraftStateBase = {
-    leagueId: league1Id,
-    status: LeagueStateValues.DRAFT_SCHEDULED,
-    draftType: 'snake',
-    currentOverallPick: 1,
-    currentRound: 1,
-    currentPickInRound: 1,
-    currentTeamId: league1Teams[0]!.id,
-    currentTeamName: league1Teams[0]!.name,
-    autoDraftTeamIds: [],
-    timerEndsAt: addSeconds(now, 1800).toISOString(),
-    picks: [],
-  }
-
-  // League 3: Season active (draft complete, rosters locked/unlocked based on lineupLockAt)
-  const draftOrder3 = buildSnakeDraftOrder(league3Teams.map((t) => t.id), 24)
-  const draft3Picks: DraftPick[] = []
-  for (let i = 1; i <= 24; i++) {
-    const teamId = draftOrder3[i - 1]
-    const team = league3Teams.find((t) => t.id === teamId)!
-    const player = basePlayers3[i - 1]
-    player.drafted = true
-    team.rosterPlayerIds.push(player.id)
-    if (team.rosterPlayerIds.length <= 4) {
-      team.lineup.starters.push(player.id)
-    } else {
-      team.lineup.bench.push(player.id)
-    }
-
-    const { round, pickInRound } = computeRoundAndPickInRound(i, league3Teams.length)
-    draft3Picks.push({
-      overallPick: i,
-      round,
-      pickInRound,
-      teamId,
-      playerId: player.id,
-      teamName: team.name,
-      playerName: player.name,
-      pickedByUserId: team.ownerUserId,
-      isAuto: false,
       pickedAt: addSeconds(now, -3600 * (18 - i)).toISOString(),
     })
   }
 
   const league2DraftBase: DraftStateBase = {
     leagueId: league2Id,
-    status: LeagueStateValues.DRAFT_IN_PROGRESS,
-    draftType: 'snake',
-    currentOverallPick: 6,
-    currentRound: 1,
-    currentPickInRound: 6,
-    currentTeamId: draftOrder2[5]!,
-    currentTeamName: league2Teams.find((t) => t.id === draftOrder2[5])?.name ?? 'Unknown Team',
-    autoDraftTeamIds: [],
-    timerEndsAt: addSeconds(now, 40).toISOString(),
-    picks: draft2Picks,
-  }
-
-  const league3DraftBase: DraftStateBase = {
-    leagueId: league3Id,
     status: LeagueStateValues.COMPLETE,
     draftType: 'snake',
     currentOverallPick: 25,
     currentRound: 5,
     currentPickInRound: 1,
-    currentTeamId: draftOrder3[0]!,
-    currentTeamName: league3Teams[0]!.name,
+    currentTeamId: draftOrder2[0]!,
+    currentTeamName: league2Teams[0]!.name,
     autoDraftTeamIds: [],
     timerEndsAt: addSeconds(now, -10).toISOString(),
-    picks: draft3Picks,
+    picks: draft2Picks,
   }
 
   const matchupsByWeek: Record<number, Matchup[]> = {
     1: [
       {
-        id: makeId('m', `${league3Id}_w1_${league3Teams[0]!.id}_${league3Teams[1]!.id}`),
+        id: makeId('m', `${league2Id}_w1_${league2Teams[0]!.id}_${league2Teams[1]!.id}`),
         week: 1,
-        homeTeamId: league3Teams[0]!.id,
-        homeTeamName: league3Teams[0]!.name,
-        awayTeamId: league3Teams[1]!.id,
-        awayTeamName: league3Teams[1]!.name,
+        homeTeamId: league2Teams[0]!.id,
+        homeTeamName: league2Teams[0]!.name,
+        awayTeamId: league2Teams[1]!.id,
+        awayTeamName: league2Teams[1]!.name,
         status: 'FINAL',
         homeScore: 84,
         awayScore: 71,
       },
       {
-        id: makeId('m', `${league3Id}_w1_${league3Teams[2]!.id}_${league3Teams[3]!.id}`),
+        id: makeId('m', `${league2Id}_w1_${league2Teams[2]!.id}_${league2Teams[3]!.id}`),
         week: 1,
-        homeTeamId: league3Teams[2]!.id,
-        homeTeamName: league3Teams[2]!.name,
-        awayTeamId: league3Teams[3]!.id,
-        awayTeamName: league3Teams[3]!.name,
+        homeTeamId: league2Teams[2]!.id,
+        homeTeamName: league2Teams[2]!.name,
+        awayTeamId: league2Teams[3]!.id,
+        awayTeamName: league2Teams[3]!.name,
         status: 'FINAL',
         homeScore: 66,
         awayScore: 79,
@@ -573,12 +618,12 @@ function buildInitialDb(): MockDb {
     ],
     2: [
       {
-        id: makeId('m', `${league3Id}_w2_${league3Teams[0]!.id}_${league3Teams[1]!.id}`),
+        id: makeId('m', `${league2Id}_w2_${league2Teams[0]!.id}_${league2Teams[1]!.id}`),
         week: 2,
-        homeTeamId: league3Teams[0]!.id,
-        homeTeamName: league3Teams[0]!.name,
-        awayTeamId: league3Teams[1]!.id,
-        awayTeamName: league3Teams[1]!.name,
+        homeTeamId: league2Teams[0]!.id,
+        homeTeamName: league2Teams[0]!.name,
+        awayTeamId: league2Teams[1]!.id,
+        awayTeamName: league2Teams[1]!.name,
         status: 'FINAL',
         homeScore: 91,
         awayScore: 88,
@@ -588,8 +633,8 @@ function buildInitialDb(): MockDb {
 
   const standings: StandingRow[] = [
     {
-      teamId: league3Teams[0]!.id,
-      teamName: league3Teams[0]!.name,
+      teamId: league2Teams[0]!.id,
+      teamName: league2Teams[0]!.name,
       rank: 1,
       wins: 2,
       losses: 0,
@@ -597,8 +642,8 @@ function buildInitialDb(): MockDb {
       pointsAgainst: 142,
     },
     {
-      teamId: league3Teams[3]!.id,
-      teamName: league3Teams[3]!.name,
+      teamId: league2Teams[3]!.id,
+      teamName: league2Teams[3]!.name,
       rank: 2,
       wins: 1,
       losses: 1,
@@ -606,8 +651,8 @@ function buildInitialDb(): MockDb {
       pointsAgainst: 161,
     },
     {
-      teamId: league3Teams[2]!.id,
-      teamName: league3Teams[2]!.name,
+      teamId: league2Teams[2]!.id,
+      teamName: league2Teams[2]!.name,
       rank: 3,
       wins: 1,
       losses: 1,
@@ -615,8 +660,8 @@ function buildInitialDb(): MockDb {
       pointsAgainst: 145,
     },
     {
-      teamId: league3Teams[1]!.id,
-      teamName: league3Teams[1]!.name,
+      teamId: league2Teams[1]!.id,
+      teamName: league2Teams[1]!.name,
       rank: 4,
       wins: 0,
       losses: 2,
@@ -674,15 +719,15 @@ function buildInitialDb(): MockDb {
   const league2: LeagueRecord = {
     league: {
       id: league2Id,
-      name: 'Hardwood Pulse League',
-      sport: 'basketball',
-      state: LeagueStateValues.DRAFT_IN_PROGRESS,
-      inviteCode: 'SEASON456',
+      name: 'Prime Time Gridiron',
+      sport: 'football',
+      state: LeagueStateValues.SEASON_ACTIVE,
+      inviteCode: 'GRID789',
     },
     members: league2Members,
     teams: league2Teams,
     players: basePlayers2.slice(),
-    autoDraftTeamIds: [league2Teams[6]!.id],
+    autoDraftTeamIds: [],
     settings: {
       isPrivate: true,
       maxTeams: league2Teams.length,
@@ -701,62 +746,16 @@ function buildInitialDb(): MockDb {
       tradeApproval: 'commissioner',
     },
     draftBase: league2DraftBase,
-    matchupsByWeek: {},
-    standings: [],
+    matchupsByWeek,
+    standings,
     chatMessages: seedChat(league2Id, league2Members),
-    matchupMessagesById: {},
+    matchupMessagesById: seedMatchupMessages(league2Id, league2Members, matchupsByWeek),
     auditEvents: [
       {
         id: makeId('audit', `${league2Id}_seed_created`),
         leagueId: league2Id,
         type: 'LEAGUE_CREATED',
-        actorDisplayName: 'Hudson',
-        message: 'League created by commissioner.',
-        createdAt: safeNowIso(),
-      },
-    ],
-  }
-
-  const league3: LeagueRecord = {
-    league: {
-      id: league3Id,
-      name: 'Diamond Series Collective',
-      sport: 'baseball',
-      state: LeagueStateValues.SEASON_ACTIVE,
-      inviteCode: 'CLUB789',
-    },
-    members: league3Members,
-    teams: league3Teams,
-    players: basePlayers3.slice(),
-    autoDraftTeamIds: [],
-    settings: {
-      isPrivate: true,
-      maxTeams: league3Teams.length,
-      rosterCap: 10,
-      lineupStarters: 4,
-      draftType: 'snake',
-      draftPickSeconds: 45,
-      autoPickEnabled: false,
-      draftRounds: 6,
-      scoringPreset: 'standard',
-      pointsPassTd: 4,
-      pointsRushTd: 6,
-      pointsRecTd: 6,
-      pointsReception: 0,
-      addDropEnabled: true,
-      tradeApproval: 'commissioner',
-    },
-    draftBase: league3DraftBase,
-    matchupsByWeek,
-    standings,
-    chatMessages: seedChat(league3Id, league3Members),
-    matchupMessagesById: seedMatchupMessages(league3Id, league3Members, matchupsByWeek),
-    auditEvents: [
-      {
-        id: makeId('audit', `${league3Id}_seed_created`),
-        leagueId: league3Id,
-        type: 'LEAGUE_CREATED',
-        actorDisplayName: 'Hudson',
+        actorDisplayName: 'Kaden',
         message: 'League created by commissioner.',
         createdAt: safeNowIso(),
       },
@@ -767,9 +766,8 @@ function buildInitialDb(): MockDb {
     leaguesById: {
       [league1Id]: league1,
       [league2Id]: league2,
-      [league3Id]: league3,
     },
-    nextLeagueCounter: 4,
+    nextLeagueCounter: 3,
   }
 }
 

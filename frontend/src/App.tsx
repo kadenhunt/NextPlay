@@ -34,7 +34,7 @@ export default function App() {
           <AuthProvider>
           <Routes>
             <Route path="/" element={<RootLayout />}>
-              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route index element={<Navigate to="/login" replace />} />
               <Route path="login" element={<LoginPage />} />
               <Route path="register" element={<RegisterPage />} />
               <Route path="forgot-password" element={<ForgotPasswordPage />} />

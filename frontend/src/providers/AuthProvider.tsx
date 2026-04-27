@@ -29,6 +29,7 @@ const STORAGE_KEY = 'nextplay.auth.user'
 const EMAIL_VERIFIED_KEY = 'nextplay.auth.emailVerified'
 
 const useServerAuth = () => import.meta.env.VITE_USE_SERVER_AUTH === 'true'
+const demoUserIdOverride = import.meta.env.VITE_DEMO_USER_ID?.trim()
 
 const PUBLIC_AUTH_PATHS = ['/login', '/register', '/forgot-password']
 
@@ -47,6 +48,13 @@ function readUserFromStorage(): AuthUser | null {
 function sessionUrl() {
   const base = getApiBaseUrl()
   return base ? `${base}/api/auth/session` : '/api/auth/session'
+}
+
+function normalizeAuthUserId(rawId: string) {
+  if (demoUserIdOverride && demoUserIdOverride.length > 0) {
+    return demoUserIdOverride
+  }
+  return rawId
 }
 
 export default function AuthProvider({ children }: PropsWithChildren) {
@@ -111,7 +119,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
         if (data.user) {
           setAuth({
             user: {
-              id: data.user.id,
+              id: normalizeAuthUserId(data.user.id),
               email: data.user.email,
               displayName: data.user.displayName,
             },
@@ -168,7 +176,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
             if (!data?.user) throw new Error('Login failed')
             setAuth({
               user: {
-                id: data.user.id,
+                id: normalizeAuthUserId(data.user.id),
                 email: data.user.email,
                 displayName: data.user.displayName,
               },
@@ -205,7 +213,7 @@ export default function AuthProvider({ children }: PropsWithChildren) {
             if (!data?.user) throw new Error('Registration failed')
             setAuth({
               user: {
-                id: data.user.id,
+                id: normalizeAuthUserId(data.user.id),
                 email: data.user.email,
                 displayName: data.user.displayName,
               },

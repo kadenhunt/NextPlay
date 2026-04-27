@@ -8,6 +8,7 @@ type DevModeContextValue = {
 
 /** Same key mock layer reads so demo-only synthetic data stays off until Dev mode is on. */
 export const NEXTPLAY_DEV_MODE_STORAGE_KEY = 'nextplay.devMode'
+const DEV_MODE_LOCKED_FOR_DEMO = true
 
 const DevModeContext = createContext<DevModeContextValue>({
   devMode: false,
@@ -16,6 +17,14 @@ const DevModeContext = createContext<DevModeContextValue>({
 
 export default function DevModeProvider({ children }: PropsWithChildren) {
   const [devMode, setDevMode] = useState(() => {
+    if (DEV_MODE_LOCKED_FOR_DEMO) {
+      try {
+        localStorage.setItem(NEXTPLAY_DEV_MODE_STORAGE_KEY, '0')
+      } catch {
+        /* noop */
+      }
+      return false
+    }
     try {
       return localStorage.getItem(NEXTPLAY_DEV_MODE_STORAGE_KEY) === '1'
     } catch {
@@ -24,6 +33,7 @@ export default function DevModeProvider({ children }: PropsWithChildren) {
   })
 
   const toggleDevMode = useCallback(() => {
+    if (DEV_MODE_LOCKED_FOR_DEMO) return
     setDevMode((prev) => {
       const next = !prev
       try {
