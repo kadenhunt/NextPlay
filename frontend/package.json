@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:unit": "vitest run --reporter=verbose src/test/unit",
-    "test:integration": "vitest run --reporter=verbose src/test/integration"
+    "test:integration": "vitest run --reporter=verbose src/test/integration",
+    "test:smoke": "vitest run --reporter=verbose src/test/smoke",
+    "test:regression": "vitest run --reporter=verbose src/test/regression",
+    "test:security": "vitest run --reporter=verbose src/test/security"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.95.2",
