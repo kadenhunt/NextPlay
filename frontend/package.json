@@ -13,7 +13,9 @@
     "test:integration": "vitest run --reporter=verbose src/test/integration",
     "test:smoke": "vitest run --reporter=verbose src/test/smoke",
     "test:regression": "vitest run --reporter=verbose src/test/regression",
-    "test:security": "vitest run --reporter=verbose src/test/security"
+    "test:security": "vitest run --reporter=verbose src/test/security",
+    "test:performance": "vitest run --reporter=verbose src/test/performance",
+    "test:accessibility": "vitest run --reporter=verbose src/test/accessibility"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.95.2",
